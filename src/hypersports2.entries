@@ -1,0 +1,104 @@
+# Puntos de entrada de Hyper Sports 2 (Konami, RC-717, 1984). ROM de 16 KB
+# en 0x4000. Cada uno con la instruccion que lo justifica.
+#
+# El unico que declara el cartucho es INIT: la BIOS lee la cabecera "AB" y
+# salta ahi al terminar de arrancar.
+0x4064   # INIT, declarado en la cabecera del cartucho
+
+# La interrupcion. INIT escribe `jp 0x4022` en el gancho H.KEYI (0xFD9A) con
+# el `ld hl,4022h / ld (0FD9Bh),hl` de 0x406C-0x406F, y acaba en `jr $`
+# (0x40A0): todo el juego corre desde aqui.
+0x4022
+
+# --- El despachador de Konami, 0x4046: `add a,a / pop hl / call HL_MAS_A /
+# ld e,(hl) / inc hl / ld d,(hl) / ex de,hl / jp (hl)`. La tabla va PEGADA
+# detras del call, y su tamano es la distancia hasta su destino mas bajo de
+# los que apuntan hacia delante.
+
+# Tabla de 0x40C8 (call en 0x40C5): 11 entradas.
+0x40DE   # entrada 0
+0x4112   # entrada 1
+0x4119   # entrada 2
+0x4132   # entrada 3
+0x4157   # entrada 4
+0x4162   # entrada 5
+0x4176   # entrada 6
+0x418B   # entrada 7
+0x41A7   # entrada 8
+0x41E2   # entrada 9
+0x4211   # entrada 10
+
+# Tabla de 0x4B80 (call en 0x4B7D): 3 entradas.
+0x4C61   # entrada 0
+0x4CA0   # entrada 1
+0x4C74   # entrada 2
+
+# Tabla de 0x4BB1 (call en 0x4BAE): 3 entradas.
+0x4BB7   # entrada 0
+0x4C25   # entrada 1
+0x4BFB   # entrada 2
+
+# Tabla de 0x4CD0 (call en 0x4CCD): 3 entradas.
+0x4EBA   # entrada 0
+0x528D   # entrada 1
+0x5147   # entrada 2
+
+# Tabla de 0x4DFE (call en 0x4DFB): 3 entradas.
+0x4E04   # entrada 0
+0x4E30   # entrada 1
+0x4EA3   # entrada 2
+
+# Tabla de 0x4EC4 (call en 0x4EC1): 7 entradas.
+0x4ED2   # entrada 0
+0x4EF3   # entrada 1
+0x4EFA   # entrada 2
+0x4FD6   # entrada 3
+0x4FEA   # entrada 4
+0x501A   # entrada 5
+0x50DC   # entrada 6
+
+# Tabla de 0x5054 (call en 0x5051): 3 entradas.
+0x505A   # entrada 0
+0x50B8   # entrada 1
+0x5065   # entrada 2
+
+# Tabla de 0x5151 (call en 0x514E): 11 entradas.
+0x5167   # entrada 0
+0x518B   # entrada 1
+0x51AA   # entrada 2
+0x51BA   # entrada 3
+0x51C2   # entrada 4
+0x522E   # entrada 5
+0x4FD6   # entrada 6
+0x5000   # entrada 7
+0x501A   # entrada 8
+0x525B   # entrada 9
+0x50DC   # entrada 10
+
+# Tabla de 0x5297 (call en 0x5294): 7 entradas.
+0x52A5   # entrada 0
+0x52C4   # entrada 1
+0x52D2   # entrada 2
+0x4FD6   # entrada 3
+0x4FEA   # entrada 4
+0x501A   # entrada 5
+0x50DC   # entrada 6
+
+# Tabla de 0x547C (call en 0x5479): 5 entradas.
+0x5495   # entrada 0
+0x54E1   # entrada 1
+0x54E8   # entrada 2
+0x54ED   # entrada 3
+0x5486   # entrada 4
+
+# --- Direcciones de RETORNO metidas en la pila: el despachador no vuelve al
+# call, asi que lo que tiene que correr detras se empuja antes. Ojo: entre el
+# `ld hl,NN` y el `push hl` puede haber otras instrucciones, asi que no basta
+# con buscar la pareja pegada.
+0x4CC8   # `ld hl,04cc8h` en 0x4DF4 y `push hl` en 0x4DF7
+0x521C   # `ld hl,0521ch` en 0x5147 y `push hl` en 0x514A
+0x44E6   # `ld hl,044e6h` en 0x40BE y `push hl` en 0x40C3, con un `ld a,(nn)` en
+         # medio. Es lo que corre detras de cada uno de los 11 estados del
+         # despacho de 0x40C5.
+0x4F87   # `ld hl,04f87h` en 0x4EBA y `push hl` en 0x4EC0, igual: lo que corre
+         # detras del despacho de 0x4EC1.

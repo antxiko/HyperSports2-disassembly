@@ -1,0 +1,13 @@
+# Las tablas de palabras del despachador 0x4046, que van justo detras de su
+# `call`. Un trazador que siga de largo se las come como instrucciones y da
+# cobertura falsa.
+0x40C8 0x40DE   tabla de 11 palabras del despacho de 0x40C5
+0x4B80 0x4B86   tabla de 3 palabras del despacho de 0x4B7D
+0x4BB1 0x4BB7   tabla de 3 palabras del despacho de 0x4BAE
+0x4CD0 0x4CD6   tabla de 3 palabras del despacho de 0x4CCD
+0x4DFE 0x4E04   tabla de 3 palabras del despacho de 0x4DFB
+0x4EC4 0x4ED2   tabla de 7 palabras del despacho de 0x4EC1
+0x5054 0x505A   tabla de 3 palabras del despacho de 0x5051
+0x5151 0x5167   tabla de 11 palabras del despacho de 0x514E
+0x5297 0x52A5   tabla de 7 palabras del despacho de 0x5294
+0x547C 0x5486   tabla de 5 palabras del despacho de 0x5479

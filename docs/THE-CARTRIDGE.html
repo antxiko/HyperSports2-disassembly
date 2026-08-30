@@ -1,0 +1,106 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>The cartridge — Hyper Sports 2 (Konami, 1984)</title>
+<style>
+:root{--tinta:#cfd0d4;--suave:#83868f;--fondo:#000;--panel:#0c0e13;--linea:#23262e;
+  --rojo:#ff897d;--cyan:#65dbef;--verde:#3eb849;--oro:#ded087}
+@media (prefers-color-scheme:light){:root{--tinta:#191a1e;--suave:#5a5d66;--fondo:#e9e7e1;
+  --panel:#f7f6f2;--linea:#d0cdc5;--rojo:#b23f34;--cyan:#1c6b7c;--verde:#2b7734;--oro:#8a7420}}
+:root[data-theme="dark"]{--tinta:#cfd0d4;--suave:#83868f;--fondo:#000;--panel:#0c0e13;
+  --linea:#23262e;--rojo:#ff897d;--cyan:#65dbef;--verde:#3eb849;--oro:#ded087}
+:root[data-theme="light"]{--tinta:#191a1e;--suave:#5a5d66;--fondo:#e9e7e1;--panel:#f7f6f2;
+  --linea:#d0cdc5;--rojo:#b23f34;--cyan:#1c6b7c;--verde:#2b7734;--oro:#8a7420}
+*{box-sizing:border-box}
+body{margin:0;background:var(--fondo);color:var(--tinta);padding:0 1.25rem 6rem;
+  font:15px/1.7 ui-monospace,"SF Mono",Menlo,Consolas,monospace}
+.w{max-width:1120px;margin:0 auto}
+.n{max-width:68ch}
+h1,h2,h3,h4{font-weight:400;text-wrap:balance}
+a{color:var(--cyan)}
+img{image-rendering:pixelated;max-width:100%;height:auto;display:block}
+header.top{display:flex;flex-direction:column;align-items:center;gap:1.5rem;
+  padding:4rem 0 2rem;text-align:center}
+header.top img{width:min(100%,642px)}
+.claim{max-width:60ch;color:var(--suave);font-size:1.05rem}
+.claim b{color:var(--tinta);font-weight:400}
+.ficha{display:flex;flex-wrap:wrap;justify-content:center;gap:0 1.5rem;width:100%;
+  font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--suave);
+  border-top:1px solid var(--linea);border-bottom:1px solid var(--linea);padding:.85rem 0}
+.ficha b{color:var(--rojo);font-weight:400}
+nav{display:flex;flex-wrap:wrap;gap:1.25rem;justify-content:center;padding:1.25rem 0;
+  font-size:12px;letter-spacing:.08em;text-transform:uppercase}
+nav a{color:var(--suave);text-decoration:none;border-bottom:1px solid transparent}
+nav a:hover,nav a:focus{color:var(--tinta);border-bottom-color:var(--rojo)}
+nav.docs{border-top:1px solid var(--linea);border-bottom:1px solid var(--linea);
+  margin-bottom:1rem}
+section{margin-top:4.5rem;scroll-margin-top:1rem}
+section>h2{font-size:1rem;letter-spacing:.1em;text-transform:uppercase;
+  border-left:3px solid var(--rojo);padding-left:.9rem;margin:0 0 1.5rem}
+.cifras{display:grid;gap:1px;background:var(--linea);border:1px solid var(--linea);
+  grid-template-columns:repeat(auto-fit,minmax(160px,1fr))}
+.cifra{background:var(--panel);padding:1.1rem}
+.cifra b{display:block;font-size:1.7rem;color:var(--oro);font-weight:400;
+  font-variant-numeric:tabular-nums;line-height:1.2}
+.cifra span{font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--suave)}
+.hall{border-top:1px solid var(--linea);padding-top:1.75rem;margin-top:2.5rem}
+.hall:first-of-type{border-top:0;padding-top:0;margin-top:0}
+.hall h3{margin:0 0 .75rem;font-size:1.15rem;color:var(--rojo)}
+.hall h4{color:var(--oro);margin:1.5rem 0 .5rem;font-size:.95rem}
+.hall p{margin:0 0 1rem}
+pre.asm{background:var(--panel);border-left:2px solid var(--verde);margin:1.25rem 0;
+  padding:1rem 1.1rem;overflow-x:auto;font-size:13px;line-height:1.6;color:var(--tinta)}
+.par{display:grid;gap:1.25rem;grid-template-columns:1fr}
+@media(min-width:820px){.par{grid-template-columns:1fr 1fr}}
+.par figure{margin:0}
+table{border-collapse:collapse;width:100%;margin:1.25rem 0;font-size:13px;display:block;
+  overflow-x:auto}
+th,td{text-align:left;padding:.5rem .75rem;border-bottom:1px solid var(--linea)}
+th{color:var(--suave);font-weight:400;font-size:11px;letter-spacing:.07em;text-transform:uppercase}
+td.num{font-variant-numeric:tabular-nums;color:var(--oro)}
+.nivel{margin-top:2rem}
+.nivel h3{margin:0 0 .9rem;font-size:.95rem;letter-spacing:.06em;text-transform:uppercase}
+.nivel em{color:var(--cyan);font-style:normal}
+.sep{color:var(--suave);margin:0 .6rem}
+.rejilla{display:grid;gap:.9rem;grid-template-columns:repeat(auto-fill,minmax(250px,1fr))}
+.rejilla figure{margin:0;background:var(--panel);box-shadow:0 0 0 1px var(--linea)}
+.rejilla figcaption{display:flex;justify-content:space-between;padding:.45rem .65rem;
+  font-size:11px;color:var(--suave);border-top:1px solid var(--linea)}
+.dir{font-variant-numeric:tabular-nums;color:var(--verde)}
+footer{margin-top:5rem;padding-top:1.5rem;border-top:1px solid var(--linea);
+  color:var(--suave);font-size:12px}
+
+/* Aviso de trabajo en curso: tiene que verse antes que las cifras, porque un
+   100% mal leido hace mas dano que no ponerlo. */
+.aviso{background:#3a2a10;border-left:3px solid var(--oro);margin:1.5rem auto;
+  padding:1rem 1.2rem;max-width:900px;border-radius:4px}
+.aviso p{margin:0;color:var(--tinta);font-size:15px;line-height:1.65}
+.galeria{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+  gap:1.5rem;margin:1.5rem 0}
+.galeria figure{margin:0}
+.galeria img{width:100%;height:auto;image-rendering:pixelated;
+  border:1px solid var(--linea);border-radius:3px}
+.galeria figcaption{color:var(--suave);font-size:13px;margin-top:.5rem}
+audio{display:block;width:100%;max-width:640px;margin:.75rem 0 1.5rem}
+</style>
+<div class="w"><nav class="top"><a href="index.html">Home</a><a href="GETTING-STARTED.html">Start</a><a href="THE-GAME.html">The game</a><a href="THE-CARTRIDGE.html" style=color:var(--tinta)>The cartridge</a><a href="THE-CODE.html">The code</a><a href="FINDINGS.html">Findings</a><a href="IN-THE-EMULATOR.html">In the emulator</a><a href="OPEN-QUESTIONS.html">Open questions</a><a href="es/EL-CARTUCHO.html" style="margin-left:auto;color:var(--oro)">Castellano</a></nav>
+<h1 id="the-cartridge">The cartridge</h1>
+<p>16,384 bytes that map into page 1 of the MSX, 0x4000-0x7FFF. The header at 0x4000 is the usual one: the <code>AB</code> mark and, of the four vectors, only INIT is filled in, pointing at 0x4064.</p>
+<h2 id="what-the-16-kb-are">What the 16 KB are</h2>
+<table><tr><th></th><th>bytes</th><th>share</th></tr><tr><td>traced code</td><td>6,956</td><td>42.46%</td></tr><tr><td>identified data</td><td>9,428</td><td>57.54%</td></tr><tr><td>unexplained</td><td>0</td><td>0.00%</td></tr></table>
+<p>The data is not one lump: it is 151 named ranges, each closed against what reads it. <code>make sanity</code> is what prints this table, and it fails if a single byte is left over.</p>
+<h2 id="the-video-chip">The video chip</h2>
+<p><code>MANDA_LOS_REGISTROS_DEL_VDP</code> (0x4476) writes the eight bytes at 0x4487 one by one through the BIOS. They put the machine in SCREEN 2 with 16x16 sprites and lay the memory out like this:</p>
+<table><tr><th>table</th><th>address</th></tr><tr><td>names</td><td>0x3800</td></tr><tr><td>colours</td><td>0x0000</td></tr><tr><td>patterns</td><td>0x2000</td></tr><tr><td>sprite attributes</td><td>0x3B00</td></tr><tr><td>sprite patterns</td><td>0x1800</td></tr></table>
+<p>The border is black. Patterns and colours have their three thirds independent, and the cartridge uses that: the font goes into all three, and each event only replaces the two lower ones.</p>
+<h2 id="how-the-graphics-are-stored">How the graphics are stored</h2>
+<p>Nothing is stored as a screen. There are three interpreters:</p>
+<ul><li><b>The run-length stream</b> (0x43FB). One count byte rules: 0x00 ends it, 0x80 brings a new VRAM address in the two bytes that follow, with bit 7 set it copies <code>n &amp; 0x7F</code> literal bytes, and without it, it repeats the next byte <code>n</code> times. Entering at 0x43F5 the stream carries its own destination in front.</li><li><b>The tile list</b> (0x4050). Two bytes with the name-table cell and then the tiles; 0xFE jumps to another cell, 0xFF ends.</li><li><b>The title script</b> (0x423C). Each byte is a count: with bit 7 it fills eight cells with the byte that follows, and without it, it repeats the same eight — one whole tile — that many times.</li></ul>
+<p>Every picture on this site is drawn by running those three in Python, in <code>tools/graficos.py</code>. If a range or a format were wrong, what would come out is noise.</p>
+<h2 id="where-each-event-s-graphics-live">Where each event&#x27;s graphics live</h2>
+<p>The table at 0x6C3A holds <b>four records of three pointers</b>: patterns to VRAM 0x2A00, colours to 0x0A00 and sprites to 0x1800, indexed by (0xE080) &amp; 3 times six. The fourth record is the records screen, which shares its sprites with the archery. The backgrounds are somewhere else: three words at 0x42A0, straight into the name table from row 8.</p>
+<h2 id="the-sound">The sound</h2>
+<p>Three channels of twelve bytes each from 0xE010: the note counter, how long it lasts, the state — which is the number of the effect playing, with bit 7 for the long commands and bit 6 for noise —, the pointer into the stream, the octave, the background volume, the volume sounding, the fade count, the pitch and the detune.</p>
+<p><code>CORRE_EL_SONIDO</code> (0x7696) steps the three every frame and leaves in 0xE036 the OR of the three states: that is the &quot;something is playing&quot; flag half the cartridge waits on. There are 48 effects and short tunes in the table at 0x78AC, and the tone table is one octave of twelve periods — the rest come from doubling.</p>
+<h2 id="the-ram">The RAM</h2>
+<p>0xE000 is the state and 0xE001 the sub-state; 0xE003 the frame counter, 0xE004 the general wait. 0xE043-0xE048 hold the joystick as read and as it was. 0xE063 keeps the points in BCD, 0xE080 the event and 0xE0C0 the sprite records that go up to the VDP in one block. The stack starts at 0xE400.</p>
+<footer><p><em>Hyper Sports 2</em> was published by Konami for the MSX; its catalogue number is RC-717 and it is 16 KB. All rights in the game remain with their holders. This is preservation, study and documentation work, and the cartridge image is not distributed.</p></footer></div>

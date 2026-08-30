@@ -1,0 +1,102 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Open questions — Hyper Sports 2 (Konami, 1984)</title>
+<style>
+:root{--tinta:#cfd0d4;--suave:#83868f;--fondo:#000;--panel:#0c0e13;--linea:#23262e;
+  --rojo:#ff897d;--cyan:#65dbef;--verde:#3eb849;--oro:#ded087}
+@media (prefers-color-scheme:light){:root{--tinta:#191a1e;--suave:#5a5d66;--fondo:#e9e7e1;
+  --panel:#f7f6f2;--linea:#d0cdc5;--rojo:#b23f34;--cyan:#1c6b7c;--verde:#2b7734;--oro:#8a7420}}
+:root[data-theme="dark"]{--tinta:#cfd0d4;--suave:#83868f;--fondo:#000;--panel:#0c0e13;
+  --linea:#23262e;--rojo:#ff897d;--cyan:#65dbef;--verde:#3eb849;--oro:#ded087}
+:root[data-theme="light"]{--tinta:#191a1e;--suave:#5a5d66;--fondo:#e9e7e1;--panel:#f7f6f2;
+  --linea:#d0cdc5;--rojo:#b23f34;--cyan:#1c6b7c;--verde:#2b7734;--oro:#8a7420}
+*{box-sizing:border-box}
+body{margin:0;background:var(--fondo);color:var(--tinta);padding:0 1.25rem 6rem;
+  font:15px/1.7 ui-monospace,"SF Mono",Menlo,Consolas,monospace}
+.w{max-width:1120px;margin:0 auto}
+.n{max-width:68ch}
+h1,h2,h3,h4{font-weight:400;text-wrap:balance}
+a{color:var(--cyan)}
+img{image-rendering:pixelated;max-width:100%;height:auto;display:block}
+header.top{display:flex;flex-direction:column;align-items:center;gap:1.5rem;
+  padding:4rem 0 2rem;text-align:center}
+header.top img{width:min(100%,642px)}
+.claim{max-width:60ch;color:var(--suave);font-size:1.05rem}
+.claim b{color:var(--tinta);font-weight:400}
+.ficha{display:flex;flex-wrap:wrap;justify-content:center;gap:0 1.5rem;width:100%;
+  font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--suave);
+  border-top:1px solid var(--linea);border-bottom:1px solid var(--linea);padding:.85rem 0}
+.ficha b{color:var(--rojo);font-weight:400}
+nav{display:flex;flex-wrap:wrap;gap:1.25rem;justify-content:center;padding:1.25rem 0;
+  font-size:12px;letter-spacing:.08em;text-transform:uppercase}
+nav a{color:var(--suave);text-decoration:none;border-bottom:1px solid transparent}
+nav a:hover,nav a:focus{color:var(--tinta);border-bottom-color:var(--rojo)}
+nav.docs{border-top:1px solid var(--linea);border-bottom:1px solid var(--linea);
+  margin-bottom:1rem}
+section{margin-top:4.5rem;scroll-margin-top:1rem}
+section>h2{font-size:1rem;letter-spacing:.1em;text-transform:uppercase;
+  border-left:3px solid var(--rojo);padding-left:.9rem;margin:0 0 1.5rem}
+.cifras{display:grid;gap:1px;background:var(--linea);border:1px solid var(--linea);
+  grid-template-columns:repeat(auto-fit,minmax(160px,1fr))}
+.cifra{background:var(--panel);padding:1.1rem}
+.cifra b{display:block;font-size:1.7rem;color:var(--oro);font-weight:400;
+  font-variant-numeric:tabular-nums;line-height:1.2}
+.cifra span{font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--suave)}
+.hall{border-top:1px solid var(--linea);padding-top:1.75rem;margin-top:2.5rem}
+.hall:first-of-type{border-top:0;padding-top:0;margin-top:0}
+.hall h3{margin:0 0 .75rem;font-size:1.15rem;color:var(--rojo)}
+.hall h4{color:var(--oro);margin:1.5rem 0 .5rem;font-size:.95rem}
+.hall p{margin:0 0 1rem}
+pre.asm{background:var(--panel);border-left:2px solid var(--verde);margin:1.25rem 0;
+  padding:1rem 1.1rem;overflow-x:auto;font-size:13px;line-height:1.6;color:var(--tinta)}
+.par{display:grid;gap:1.25rem;grid-template-columns:1fr}
+@media(min-width:820px){.par{grid-template-columns:1fr 1fr}}
+.par figure{margin:0}
+table{border-collapse:collapse;width:100%;margin:1.25rem 0;font-size:13px;display:block;
+  overflow-x:auto}
+th,td{text-align:left;padding:.5rem .75rem;border-bottom:1px solid var(--linea)}
+th{color:var(--suave);font-weight:400;font-size:11px;letter-spacing:.07em;text-transform:uppercase}
+td.num{font-variant-numeric:tabular-nums;color:var(--oro)}
+.nivel{margin-top:2rem}
+.nivel h3{margin:0 0 .9rem;font-size:.95rem;letter-spacing:.06em;text-transform:uppercase}
+.nivel em{color:var(--cyan);font-style:normal}
+.sep{color:var(--suave);margin:0 .6rem}
+.rejilla{display:grid;gap:.9rem;grid-template-columns:repeat(auto-fill,minmax(250px,1fr))}
+.rejilla figure{margin:0;background:var(--panel);box-shadow:0 0 0 1px var(--linea)}
+.rejilla figcaption{display:flex;justify-content:space-between;padding:.45rem .65rem;
+  font-size:11px;color:var(--suave);border-top:1px solid var(--linea)}
+.dir{font-variant-numeric:tabular-nums;color:var(--verde)}
+footer{margin-top:5rem;padding-top:1.5rem;border-top:1px solid var(--linea);
+  color:var(--suave);font-size:12px}
+
+/* Aviso de trabajo en curso: tiene que verse antes que las cifras, porque un
+   100% mal leido hace mas dano que no ponerlo. */
+.aviso{background:#3a2a10;border-left:3px solid var(--oro);margin:1.5rem auto;
+  padding:1rem 1.2rem;max-width:900px;border-radius:4px}
+.aviso p{margin:0;color:var(--tinta);font-size:15px;line-height:1.65}
+.galeria{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+  gap:1.5rem;margin:1.5rem 0}
+.galeria figure{margin:0}
+.galeria img{width:100%;height:auto;image-rendering:pixelated;
+  border:1px solid var(--linea);border-radius:3px}
+.galeria figcaption{color:var(--suave);font-size:13px;margin-top:.5rem}
+audio{display:block;width:100%;max-width:640px;margin:.75rem 0 1.5rem}
+</style>
+<div class="w"><nav class="top"><a href="index.html">Home</a><a href="GETTING-STARTED.html">Start</a><a href="THE-GAME.html">The game</a><a href="THE-CARTRIDGE.html">The cartridge</a><a href="THE-CODE.html">The code</a><a href="FINDINGS.html">Findings</a><a href="IN-THE-EMULATOR.html">In the emulator</a><a href="OPEN-QUESTIONS.html" style=color:var(--tinta)>Open questions</a><a href="es/PREGUNTAS-ABIERTAS.html" style="margin-left:auto;color:var(--oro)">Castellano</a></nav>
+<h1 id="open-questions">Open questions</h1>
+<p>The binary is explained down to the last byte and it reassembles into the ROM. That does not mean everything is understood. What is still open, said plainly:</p>
+<h2 id="the-archer-s-six-sprite-records">The archer&#x27;s six sprite records</h2>
+<p><code>COLOCA_LAS_SEIS_FICHAS</code> (0x5E4D) copies the 24 bytes at 0x5E59 into 0xE0C4 with no arithmetic at all: six sprite records with X 0xE4 and 0xE8, at the right edge of the screen, and patterns 0x64, 0x68, 0x6C, 0x70 and 0x18. Drawn from the ROM, 0x68 and 0x74 are a figure with its arms out, and 0x70 and 0x78 look like legs; <code>ALTERNA_DOS_PATRONES</code> (0x5E35) swaps between the two pairs every eight frames. It looks like a figure running, but the moment it appears on screen has not been caught, so this site does not claim what it is.</p>
+<h2 id="what-0xe075-holds">What 0xE075 holds</h2>
+<p><code>ELIGE_LA_CATEGORIA</code> (0x75F7) walks the eight weight classes in a ring, and when it wraps it does not go back to zero: it takes the value at 0xE075. Which class that is, and who writes it, is not settled.</p>
+<h2 id="the-two-motors-of-the-archery">The two motors of the archery</h2>
+<p>0xE147 picks between two routines that move the same thing: <code>AVANZA_Y_REMATA</code> (0x5DE8) and <code>ANDA_DE_UN_LADO_A_OTRO</code> (0x5BDB). Both are commented for what they do, one instruction at a time, but which one runs in which situation has not been watched happening.</p>
+<h2 id="the-fourth-graphics-record-and-the-third-background">The fourth graphics record and the third background</h2>
+<p>The table at 0x6C3A has <b>four</b> records of three pointers; the one at 0x42A0, which holds the name-table backgrounds, has <b>three</b> words. The fourth graphics record is the records screen, which never asks for a background — but if 0xE080 &amp; 3 ever reached 3 with <code>CAMBIA_DE_PRUEBA</code> running, the background table would be read one word past its end, at 0x42A6, which is the first instruction of <code>APAGA_EL_PRIMER_SPRITE</code>. Reading the state machine it does not look reachable: the <code>bit 2</code> test at 0x41FB bumps 0xE080 past that value first. It has not been proved by running it.</p>
+<h2 id="what-the-demo-does">What the demo does</h2>
+<p>Bit 6 of 0xE002 marks the demo, and 0xE1AB makes a shot only count without breaking anything. How long the demo lasts, and what it plays, has not been timed.</p>
+<h2 id="the-name-of-the-third-of-the-three-alphabets">The name of the third of the three alphabets</h2>
+<p><code>tools/textos.py</code> reads the cartridge&#x27;s text with three tile bases: 0x21, 0x51 and 0xD1 all stand for <code>A</code>. The first two are the two halves of the scoreboard font; where the third one is used has not been pinned down beyond the title screen&#x27;s <code>PUSH SPACE KEY TO START</code>.</p>
+<hr>
+<p>If you can close any of these, the listing is set up so that an answer is one line in <code>src/hypersports2.notes</code> and a <code>make</code>.</p>
+<footer><p><em>Hyper Sports 2</em> was published by Konami for the MSX; its catalogue number is RC-717 and it is 16 KB. All rights in the game remain with their holders. This is preservation, study and documentation work, and the cartridge image is not distributed.</p></footer></div>

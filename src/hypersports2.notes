@@ -1,0 +1,1422 @@
+# Anotaciones de Hyper Sports 2 (Konami, 1984, MSX1, cartucho RC-717).
+D 0x4000 0x4010 cabecera_del_cartucho La cabecera que lee la BIOS: "AB", INIT=0x4064 y a cero STATEMENT, DEVICE y TEXT. La BIOS mapea el cartucho en la pagina 1 (0x4000-0x7FFF) y salta a 0x4064 al terminar de arrancar
+F 0x4000 2,w4,6
+B 0x4010 ----------------------------------------------------------------------
+B 0x4010 LAS TRES UTILIDADES QUE USA TODO EL CARTUCHO: escribir un byte en la
+B 0x4010 VRAM, y sumar A a HL o a DE sin signo. El puerto de datos del VDP
+B 0x4010 vive en el C alternativo, que 0x445A deja puesto.
+B 0x4010 ----------------------------------------------------------------------
+L 0x4010 VPOKE                Escribe A en la VRAM DE
+C 0x4010 Manda la direccion y deja el puerto en el C alternativo
+C 0x4014 El byte, por el registro alternativo
+L 0x4018 HL_MAS_A             HL = HL + A, sin signo
+C 0x4018 El acarreo sube al byte alto
+L 0x401D DE_MAS_A             DE = DE + A, sin signo
+C 0x401D Lo mismo con DE
+B 0x4022 ######################################################################
+B 0x4022 LA INTERRUPCION (gancho H.KEYI). Aqui corre el juego entero: INIT la
+B 0x4022 engancha y se queda en un `jr $` para siempre. Cada fotograma toca
+B 0x4022 el sonido (0x7696), lee los mandos (0x44AD) y da UN PASO del juego
+B 0x4022 (0x40AB). E005 es el candado: si el paso anterior no ha terminado,
+B 0x4022 esta interrupcion solo mueve el sonido y se va.
+B 0x4022 ######################################################################
+L 0x4022 INTERRUPCION         Cada fotograma: sonido, mandos y un paso del juego
+C 0x4022 Leer el estado del VDP baja la peticion de interrupcion
+C 0x4026 El sonido va SIEMPRE, aunque el fotograma anterior siga a medias
+C 0x402C Candado echado: el paso anterior no ha acabado
+C 0x4031 Con el candado puesto ya se admiten interrupciones: solo entrara el sonido
+C 0x4035 Un paso del juego
+C 0x4041 Y si el VDP avisa de colision o de sprites de mas, otra pasada de sonido
+B 0x4046 ----------------------------------------------------------------------
+B 0x4046 EL DESPACHADOR. Se le llama con el indice en A y la tabla de palabras
+B 0x4046 va PEGADA detras del CALL: el `pop hl` recoge la direccion de retorno,
+B 0x4046 que es justo el principio de la tabla. Salta con `jp (hl)` y no vuelve
+B 0x4046 nunca al call. Lo usan DIEZ tablas en todo el cartucho.
+B 0x4046 ----------------------------------------------------------------------
+L 0x4046 DESPACHA             Salta al destino A de la tabla que va detras del CALL
+C 0x4047 La direccion de retorno ES la tabla
+L 0x4050 PINTA_LISTA          Pinta una lista de tiles: palabra de VRAM delante, 0xFE arranca otra y 0xFF acaba
+C 0x4051 Los dos primeros bytes son la casilla donde empieza
+L 0x4056 PINTA_LISTA_TILE     Siguiente tile de la lista
+C 0x4059 0xFF: se acabo
+C 0x405B 0xFE: sigue en otra casilla
+B 0x4064 ######################################################################
+B 0x4064 INIT. Pila en 0xE400, la RAM del juego (0xE000-0xE3FF) a cero,
+B 0x4064 `jp 0x4022` en el gancho H.KEYI, el VDP y el PSG (0x4466), los doce
+B 0x4064 valores de arranque a 0xE053, y a esperar interrupciones para
+B 0x4064 siempre en 0x40A0.
+B 0x4064 ######################################################################
+L 0x4064 INIT                 Arranque desde la cabecera: RAM, gancho, VDP y a esperar
+C 0x4067 0xC3 = jp: el gancho H.KEYI queda como `jp 0x4022`
+C 0x407E `ld (hl),l` con HL en 0xE000 escribe un cero: un byte menos que `ld (hl),0`
+C 0x4081 Candado echado mientras dura el arranque
+C 0x408D Los doce valores de arranque, a 0xE053
+C 0x409B E080 arranca en 0xFF: la prueba, que el primer paso sube a 0
+L 0x40A0 ESPERA_ETERNA        Aqui se queda el programa principal; el juego es la interrupcion
+D 0x40A2 0x40AB valores_iniciales Los bytes que 0x408D copia a 0xE053 con un ldir de doce. OJO: la copia pide DOCE y aqui solo hay nueve, asi que los tres ultimos los toma del codigo que empieza en 0x40AB
+F 0x40A2 9
+B 0x40AB ----------------------------------------------------------------------
+B 0x40AB UN PASO DEL JUEGO. `ld bc,(0xE000)` trae de una sola vez el ESTADO en
+B 0x40AB C y el SUBESTADO en B, y por eso los estados de abajo reparten con
+B 0x40AB `djnz`: el subestado es la cuenta. Fuera del estado 3, y con el bit 6
+B 0x40AB de E002 a cero, se empuja 0x44E6 para que corra detras del estado.
+B 0x40AB ----------------------------------------------------------------------
+L 0x40AB PASO_DEL_JUEGO       Cuenta el fotograma y ejecuta el estado de E000 con su subestado en B
+C 0x40AB E003, el contador de fotogramas
+C 0x40AF C = E000 (el estado) y B = E001 (el subestado), de una sola lectura
+C 0x40B4 En el estado 3 no se empuja nada
+C 0x40BE La direccion que correra DESPUES del estado, empujada en la pila
+C 0x40C5 Y la tabla de once estados, justo detras
+D 0x40C8 0x40DE tabla_de_40C8 Las 11 palabras del despacho de 0x40C5, pegadas detras de su call: 0x40DE 0x4112 0x4119 0x4132 0x4157 0x4162 0x4176 0x418B 0x41A7 0x41E2 0x4211. Cierra clavada contra su destino mas bajo hacia delante
+F 0x40C8 w1
+L 0x40DE ESTADO_00_ESPERA     Subestado 0: cada dos fotogramas mira si 0x4A84 ha terminado; luego pinta la lista de 0x47F6
+C 0x40E3 Uno de cada dos fotogramas
+C 0x40E9 La lista que toque, y a esperar
+L 0x40F2 ESTADO_00_SUB1       Subestado 1: espera a que E004 llegue a cero y apaga E007
+C 0x40F4 E004, lo que queda de espera
+C 0x40FA E007 a cero
+L 0x40FF ESTADO_00_SUB2       Subestado 2: 0x437E y al subestado siguiente
+C 0x40FF Al 3 si el subestado no es el 2
+C 0x4104 Sin espera: al estado siguiente de golpe
+L 0x4107 ESTADO_00_SUB3       Subestado 3: borra la pantalla, 0x421B y los registros del VDP
+C 0x4107 Pantalla limpia, titulo montado y VDP puesto
+L 0x4112 ESTADO_01_ESPERA     Espera los fotogramas de E004 y pasa de estado
+C 0x4112 E004, los fotogramas que quedan
+L 0x4119 ESTADO_02            Subestado 0: 0x4DF4 y, con E081 puesto, al estado 0
+C 0x4119 Al subestado 1 si no es el 0
+C 0x411E E081 lo pone la prueba al acabar el intento
+L 0x4123 VUELVE_AL_ESTADO_0   E000 = 0 y el subestado a cero
+C 0x4123 El estado vuelve a cero
+L 0x4127 ESTADO_02_SUB1       Subestado 1: 0x4DD0
+L 0x412A ESPERA_A_Y_SIGUE     Deja A en E004 y sube el subestado
+C 0x412A E004 se carga con lo que traiga A
+L 0x412D SUBESTADO_SIGUIENTE  E001 + 1
+C 0x412D E001 es el subestado
+L 0x4132 ESTADO_03            Subestado 0: agota E004 y llama a 0x426D
+C 0x4132 Al subestado 1 si no es el 0
+L 0x413C ESPERA_A_Y_ESTADO    Deja A en E004 y pasa al estado siguiente
+L 0x413F ESTADO_SIGUIENTE     E000 + 1 y el subestado a cero
+C 0x413F E000 es el estado
+L 0x4143 SUBESTADO_A_CERO     E001 = 0
+C 0x4143 Y el subestado arranca de cero
+L 0x4148 ESTADO_03_SUB1       Sonido 0x9C, 80 fotogramas de espera y 0x437B
+C 0x4148 El sonido de arranque de la prueba
+C 0x414D Ochenta fotogramas
+L 0x4157 ESTADO_04            Borra la pantalla, monta la prueba (0x4B48) y su marcador (0x42FD)
+L 0x4162 ESTADO_05            Subestado 0: 0x4288 y al estado siguiente
+L 0x4169 ESTADO_05_SUB1       Baja el intento (E072), 0x4B86 y apaga E081
+C 0x4169 E072, los intentos que quedan
+C 0x4171 E081 a cero: el intento arranca limpio
+L 0x4176 ESTADO_06_EN_JUEGO   El fotograma de la prueba: 0x434F y 0x4CC8; cuando E081 avisa, se acaba el intento
+C 0x417C E081 lo pone la prueba cuando el intento ha terminado
+L 0x418B ESTADO_07_FIN_DE_INTENTO  Sin intentos que queden (E072 a cero) se va al estado 9; si quedan, al 5
+C 0x418B E072, los intentos que quedan
+C 0x4194 Sin intentos, se mira si hay continuacion
+C 0x419C Estado 9 si se acabaron los intentos...
+C 0x41A0 ...y estado 5 si queda alguno
+L 0x41A7 ESTADO_08_FIN_DE_PRUEBA  Limpia los dos bits altos de E002, deja la prueba en 2 y vuelve al estado 0
+C 0x41AB Se quedan los seis bits bajos de E002
+C 0x41B0 E080, la prueba en curso
+L 0x41B6 MIRA_SI_SIGUE        Con creditos y sin la otra bandera, gasta uno, pinta el rotulo y suena; si el sonido sigue, espera
+C 0x41B8 Sin creditos no hay nada que decidir
+C 0x41C7 El rotulo de 0x47EA
+C 0x41CD Su sonido
+C 0x41D3 Devuelve NZ: hay que seguir esperando
+L 0x41D5 ESPERA_AL_SONIDO     Hasta que el canal de E012 calle, no se apaga la bandera
+C 0x41D5 Mientras el canal de E012 suene, se espera
+C 0x41DB Las dos banderas a cero
+L 0x41E0 NO_SIGUE             Devuelve Z: no hay continuacion
+L 0x41E2 ESTADO_09_CAMBIA_DE_PRUEBA  Con E070 a cero se va al estado 8; si no, espera al sonido y pasa a la prueba siguiente
+C 0x41E6 Sin nada en E070, al estado 8
+C 0x41EC Con el canal sonando todavia, se espera
+C 0x41F5 Los dos bits bajos de E080: la prueba, de 0 a 3
+C 0x41F7 Pasada la tercera se mira el bit 2, y si no esta puesto se cambia de estado
+C 0x4201 El sonido de cambio de prueba
+L 0x4206 AL_ESTADO_4          E000 = 4: a montar la prueba
+C 0x4206 Estado 4: a montar la prueba
+L 0x420A ESTADO_09_SUB1       Sube la prueba (E080) y pasa al subestado siguiente
+C 0x420A E080, la prueba en curso
+L 0x4211 ESTADO_10            Un fotograma de 0x5469; cuando E081 avisa, al estado 4
+C 0x4211 Un fotograma de la tabla de records
+C 0x4214 Y E081 avisa de que ha terminado
+L 0x421B MONTA_LA_PANTALLA    Los graficos comunes: la fuente, el flujo de 0x4521, el color y el guion del titulo
+C 0x421B La cortinilla y los patrones comunes
+L 0x4221 PINTA_EL_FONDO_DEL_TITULO  El flujo de 0x4521, el cian de 0x180 casillas de color y, detras, el guion del logotipo
+C 0x4221 El flujo comprimido de 0x4521, con su direccion delante
+C 0x4227 0x70 en 0x180 casillas de color: cyan sobre transparente
+L 0x4232 GUION_DEL_TITULO     Recorre el guion de 0x4A2E: cada byte es una cuenta y, segun su bit 7, copia ocho bytes o rellena
+C 0x4232 La VRAM de destino la deja 0x445A
+C 0x423D El 0x00 acaba el guion
+C 0x4243 Bit 7 de la cuenta: relleno en vez de copia
+C 0x4245 Ocho bytes por vuelta: un tile entero
+C 0x4251 Y la VRAM retrocede ocho: las copias van hacia atras
+L 0x425A GUION_RELLENA        Rellena ocho casillas con el mismo byte
+C 0x4261 La cuenta se pasa de 0x80: se acabo este tramo
+L 0x4267 GUION_FIN            Y al acabar, el flujo comprimido de 0x4862
+L 0x426D PREPARA_LA_PARTIDA   Carga los graficos, borra los 0x9C bytes de E063 y deja un intento
+C 0x4273 0x9C bytes de E063 a cero, de un ldir que se copia a si mismo
+C 0x427D E070 = 1 y E071 = 0
+C 0x4284 E072, los intentos que quedan
+L 0x4288 PINTA_EL_FONDO_DE_LA_PRUEBA  Descomprime en la tabla de nombres, desde la fila 8, el flujo que le toque a la prueba (los dos bits bajos de E080)
+C 0x428B Los dos bits bajos: la prueba, de 0 a 3
+C 0x4290 La tabla de tres palabras
+C 0x429A La tabla de nombres desde la fila 8; el bit de escritura lo pone SETWRT
+D 0x42A0 0x42A6 tabla_de_tres_palabras Tres palabras que 0x4290 indexa por dos, y cada una es la lista que pinta en la VRAM 0x3900
+F 0x42A0 w1
+L 0x42A6 APAGA_EL_PRIMER_SPRITE  Pone 0xD0 en la primera Y de la tabla de sprites: en el MSX eso apaga ese sprite y todos los que van detras
+C 0x42A9 0xD0 en la Y: el VDP deja de dibujar desde ahi
+B 0x42B0 ----------------------------------------------------------------------
+B 0x42B0 LOS MARCADORES, EN BCD DE TRES BYTES. 0x42C0 compara dos numeros de
+B 0x42B0 tres bytes restandolos con `sbc` desde el byte bajo, y 0x42B0 usa
+B 0x42B0 esa comparacion para quedarse con el mayor: si el nuevo gana, un
+B 0x42B0 `lddr` lo copia encima. Sumar es 0x42F1, con `daa` detras de cada
+B 0x42B0 `adc` para que siga siendo BCD.
+B 0x42B0 ----------------------------------------------------------------------
+L 0x42B0 GUARDA_SI_ES_MAYOR   Compara los tres bytes y, si el de DE gana, lo copia sobre el de HL y repinta
+C 0x42B5 Con acarreo no gana: no se toca nada
+C 0x42B7 El lddr copia los tres bytes de una vez
+L 0x42BE COMPARA_TRES_BCD     Tres bytes; 0x42C0 entra con la longitud ya en B
+L 0x42C0 COMPARA_N_BCD        Resta (DE) menos (HL) byte a byte con acarreo: el acarreo final dice quien gana
+C 0x42C1 El xor a deja el acarreo limpio para el primer sbc
+C 0x42C3 Byte a byte, restando con acarreo
+C 0x42C7 B bytes
+C 0x42CD Sin acarreo hay empate o gana DE; el add/ccf lo convierte en la respuesta
+L 0x42D2 COBRA_LOS_PUNTOS     Suma a los puntos lo que haya en E087
+L 0x42D5 SUMA_A_LOS_PUNTOS    Suma los tres bytes de DE a los de E063 y topa en 999999
+C 0x42D8 Tres bytes en BCD
+C 0x42E3 Al pasarse, los tres bytes se clavan en 0x99: 999999 es el tope
+C 0x42EC Y con el record, por si hay que cambiarlo
+L 0x42F1 SUMA_TRES_BCD        Tres bytes de DE sobre (HL), con daa: sigue siendo BCD
+C 0x42F1 Tres bytes
+C 0x42F7 El daa deja la suma en BCD
+L 0x42FD PINTA_EL_MARCADOR    El fondo del marcador (flujo 0x4749), sus rotulos (lista 0x4712) y los numeros
+C 0x4300 El fondo del marcador
+C 0x4306 Y encima sus rotulos
+L 0x430F PINTA_LOS_NUMEROS    Los puntos en la fila 1 y el record en la fila 2, seis cifras cada uno
+C 0x430F E062, el byte alto de los puntos
+C 0x4312 Fila 1, columna 7
+C 0x4318 Fila 2, columna 7: el record
+L 0x431E PINTA_SEIS_CIFRAS    Tres bytes en BCD, dos cifras por byte, del alto al bajo
+L 0x4320 PINTA_CIFRAS_SIN_CEROS  C a cero mientras haya que comerse los ceros de la izquierda
+L 0x4322 PINTA_LAS_CIFRAS_DE_DE  Las cifras BCD del numero de DE en la casilla HL, B bytes, con C decidiendo si los ceros de delante se pintan
+C 0x4323 Cuatro rra: el nibble alto
+C 0x4329 Mientras salgan ceros y C valga 0, no se pinta nada
+C 0x432D 0x10 es el tile del '0'
+C 0x4336 La ultima cifra se pinta siempre, aunque sea un cero
+L 0x4338 PINTA_LA_CIFRA_BAJA  El nibble bajo del mismo byte
+C 0x4340 0x10 es el tile del cero
+C 0x4342 Con C a cero, la cifra se apaga
+L 0x434B BORRA_LOS_INTENTOS   Los rotulos de intento, apagados
+L 0x434F PARPADEA_EL_INTENTO  El rotulo del intento en curso, encendido o apagado segun el bit 4 del contador
+C 0x4352 Bit 4 del contador: 16 fotogramas si y 16 no
+C 0x435C E072, el intento en el que se esta
+C 0x4363 Los intentos van de abajo arriba: 3 menos el que queda
+L 0x4366 BAJA_UNA_FILA        Suma 32 a HL: una fila de la tabla de nombres
+C 0x4366 Cada rotulo, una fila mas abajo (32 casillas)
+C 0x4368 La fila de mas abajo
+C 0x436B D filas
+C 0x4371 El tile 0xA2 en la fila 5, columna 6
+L 0x4376 PINTA_O_BORRA        El tile de B, o el 0 si C lo apaga
+L 0x437B MONTA_EL_TITULO      El guion del titulo y, detras, los rotulos de la pantalla
+L 0x437E PINTA_LOS_ROTULOS    Borra la pantalla y pinta las dos listas del titulo y las tres filas de 0x4791
+C 0x4381 La lista de 0x480C
+C 0x4387 Y la de 0x47C1
+C 0x438D Fila 11, columna 8
+L 0x4390 TRES_FILAS_DE_DIECISEIS  Tres filas de dieciseis tiles seguidos desde 0x4791, dos filas de separacion entre ellas
+C 0x4396 Dieciseis tiles por fila
+C 0x439B 0x40 son dos filas de la tabla de nombres
+L 0x43A4 RELLENA_256          Igual que 0x43B2 pero con B a cero: 256 casillas
+L 0x43A8 BORRA_LA_PANTALLA    Apaga los sprites y deja las 768 casillas de la tabla de nombres a cero
+C 0x43AB VRAM 0x3800 con el bit de escritura
+C 0x43AE Las 24 filas de 32
+L 0x43B1 RELLENA_CON_CERO     Rellena BC casillas de la VRAM HL con ceros
+L 0x43B2 RELLENA_VRAM         Rellena BC casillas de la VRAM HL con el valor de A
+L 0x43B5 RELLENA_SIN_PREPARAR  Rellena con el valor que ya viene en A, sin volver a mandar la direccion al VDP
+C 0x43B5 El valor viaja en el A alternativo para que los exx no lo pisen
+C 0x43B8 El puerto de datos del VDP viaja en el C alternativo
+C 0x43BC Hasta agotar BC
+L 0x43C3 SIGUIENTE_BYTE_DEL_FLUJO  Coge el byte que toca del flujo y lo repite
+C 0x43C3 El byte que se repite viene del flujo
+L 0x43C7 COPIA_256            Copia con B a cero: 256 bytes
+L 0x43C9 COPIA_A_VRAM         Copia BC bytes de DE a la VRAM HL
+L 0x43CC COPIA_A_VRAM_BUCLE   El bucle, con la direccion ya puesta
+C 0x43CE Byte a byte al puerto de datos
+C 0x43D2 Y BC contando
+B 0x43D8 ----------------------------------------------------------------------
+B 0x43D8 EL FORMATO COMPRIMIDO. Un byte de cuenta manda: el 0x00 acaba, el
+B 0x43D8 0x80 arranca otra direccion de VRAM (que viene en las dos siguientes),
+B 0x43D8 con el bit 7 puesto se copian n&0x7F bytes tal cual, y sin el se
+B 0x43D8 repite n veces el byte que sigue. Entrando por 0x43F5 el flujo trae
+B 0x43D8 su direccion delante; por 0x43FB, la direccion ya esta en HL.
+B 0x43D8 ----------------------------------------------------------------------
+L 0x43D8 CARGA_LA_FUENTE      Los patrones de 0x4523 en la VRAM 0x2200, su color, y los dos flujos de 0x466E y 0x46F5
+C 0x43DB VRAM 0x2200: los tiles 0x40 en adelante del primer tercio
+C 0x43E1 0x80 en 0x180 casillas de color
+L 0x43F5 DESCOMPRIME_CON_DIRECCION  El flujo trae delante los dos bytes de la VRAM de destino
+C 0x43F6 Los dos primeros bytes del flujo son la VRAM
+L 0x43FB DESCOMPRIME_EN_HL    Descomprime el flujo de DE en la VRAM HL
+L 0x43FE DESCOMPRIME_SIGUIENTE  Siguiente cuenta del flujo
+C 0x43FF Los siete bits bajos son la cuenta
+C 0x4404 Con la cuenta a cero solo quedan el 0x00 y el 0x80
+C 0x4406 Iguales: era un 0x00 y se acabo. Distintos: era un 0x80, otra direccion
+C 0x440C El bit 7 decide: copia literal o relleno
+L 0x4417 RELLENA_TRES_TERCIOS  Lo mismo tres veces, subiendo 0x800: los tres tercios de la pantalla
+C 0x441E Un tercio son 0x800 bytes mas arriba
+C 0x4423 Los tres, o los dos
+L 0x4428 CARGA_LOS_PATRONES   El flujo de 0x4523 en los tres tercios y el de 0x444B en la tabla de color
+C 0x4428 El flujo de la fuente
+C 0x442B Los tiles 0x10 en adelante del primer tercio
+C 0x4431 Y su color, que sale del flujo de 0x444B
+L 0x4437 DESCOMPRIME_TRES_TERCIOS  El mismo flujo en los tres tercios, subiendo 0x800 cada vez
+C 0x4437 Tres tercios
+L 0x443B DESCOMPRIME_DOS_TERCIOS  Igual, pero solo en dos
+C 0x443B O solo dos
+C 0x4445 Otro tercio
+D 0x444B 0x445A colores_de_la_fuente Flujo comprimido SIN direccion delante: los colores de los tiles 0x10 a 0x3F, que 0x4434 mete en los tres tercios desde la VRAM 0x0080
+L 0x445A PREPARA_ESCRITURA    Manda la direccion HL al VDP y deja el puerto de datos en el C alternativo
+C 0x445B La BIOS sabe la direccion base de la VRAM
+C 0x445F 0x0006 guarda el puerto de datos del VDP de esta maquina: no se supone
+L 0x4466 ARRANCA_EL_VDP_Y_LA_VRAM  Calla el PSG, espera a que pare el sonido, borra los 16 KB de VRAM y manda los ocho registros
+C 0x4466 0xB8 en el registro 7 del PSG: los tres canales callados
+C 0x446E 0x4000 bytes: la VRAM entera a cero
+L 0x4476 MANDA_LOS_REGISTROS_DEL_VDP  Los ocho valores de 0x4487, uno por uno, con WRTVDP
+C 0x4479 Ocho registros, del 0 al 7
+D 0x4487 0x448F registros_del_vdp Los ocho valores que 0x4476 manda al VDP uno por uno con WRTVDP: R0=02 SCREEN 2, R1=E2, R2=0E nombres en 0x3800, R3=7F colores en 0x0000, R4=07 patrones en 0x2000, R5=76 atributos de sprite en 0x3B00, R6=03 patrones de sprite en 0x1800, R7=E1 borde negro
+F 0x4487 1
+L 0x448F LEE_EL_MANDO         Junta en B lo que diga el teclado y lo que diga el joystick del puerto 1
+C 0x4493 0x8F en el registro 15: el puerto 1
+L 0x449D LEE_EL_JOYSTICK      El registro 15 del PSG elige el puerto y el 14 lo lee; llega al reves y sin los dos bits altos
+C 0x449F El 15 elige el puerto
+C 0x44A5 Y el 14 trae las cuatro flechas y los dos disparos
+C 0x44A9 Un cpl: en el PSG lo pulsado es un cero
+L 0x44AD LEE_Y_APUNTA_EL_MANDO  Lee el mando y deja en E046, E047 y E048 lo pulsado, lo de antes y lo que acaba de pulsarse
+L 0x44B7 LO_RECIEN_PULSADO    Guarda lo de ahora y lo de antes, y con un xor y un and deja solo los bits que acaban de bajar
+C 0x44B9 Lo que ha cambiado
+C 0x44BA Y de eso, lo que esta puesto: lo recien pulsado
+L 0x44C1 LEE_EL_TECLADO       Las filas 7 y 8 del teclado, corridas hasta caer en los mismos bits que el joystick
+C 0x44C3 Fila 7: la flecha de arriba
+C 0x44C6 Un cpl: en el teclado lo pulsado tambien es un cero
+C 0x44CD Fila 8: las otras tres flechas y el espacio
+C 0x44D9 Otras dos vueltas: los dos disparos
+C 0x44DC Los dos bits de las flechas de abajo
+C 0x44E1 Y el ultimo, el de la derecha
+L 0x44E6 EL_MANDO_DEL_TITULO  Lee mando y teclado y, si acaba de pulsarse algo, arranca la partida o se lleva al estado 3
+C 0x44E6 El joystick del puerto 1
+C 0x44EC Y encima, el teclado
+C 0x44F0 E040 lo de ahora y E041 lo de antes
+C 0x44F8 Y de ahi, lo recien pulsado
+C 0x4504 Solo cuando el estado es 1
+C 0x4508 Por debajo del 0x10 no vale: hace falta el disparo
+C 0x450D 0x40 en E002: queda abierto el sonido
+C 0x4510 Estado 3 y submodo a cero
+D 0x4521 0x466E flujo_4521 Flujo comprimido con su direccion de VRAM delante: 384 bytes de VRAM
+D 0x466E 0x46F5 rle_466E Flujo comprimido con su direccion de VRAM delante: 368 bytes de VRAM
+D 0x46F5 0x4712 rle_46F5 Flujo comprimido con su direccion de VRAM delante: 368 bytes de VRAM
+D 0x4712 0x4749 lista_4712 Los rotulos fijos del marcador: HI, YOU, SCORE, WORLD RECORD y QUALIFY. Descifrada con tools/textos.py (el numero de tile no es el ASCII): «HI / YOU /  ....SCORE......WORLD RECORD... / QUALIFY»
+D 0x4749 0x4791 rle_4749 Flujo comprimido con su direccion de VRAM delante: 224 bytes de VRAM
+D 0x4791 0x47C1 nombres_de_las_pruebas Tres filas de dieciseis tiles que 0x4392 sube tal cual a la VRAM, dos filas de separacion entre ellas: SKEET SHOOTING, ARCHERY y WEIGHT LIFTING. Descifradas con tools/textos.py (el numero de tile no es el ASCII)
+F 0x4791 16
+D 0x47C1 0x47EA lista_47C1 La otra mitad del titulo, esta si en formato lista para PINTA_LISTA: PUSH SPACE KEY TO START y KONAMI 1984
+D 0x47EA 0x47F6 lista_47EA GAME OVER. Descifrada con tools/textos.py (el numero de tile no es el ASCII): «GAME OVER»
+D 0x47F6 0x480C lista_47F6 El rotulo VIDEO CARTRIDGE del arranque. Descifrada con tools/textos.py (el numero de tile no es el ASCII): «. VIDEO CARTRIDGE .»
+D 0x480C 0x4862 lista_480C El logotipo HYPER SPORTS 2, que son tiles y no letras: cinco filas de codigos de tile con sus saltos de casilla. Descifrada con tools/textos.py (el numero de tile no es el ASCII): «01 / 25.....ABCD. / 26EFGHIJKLMN. / 24OPQRSTUVWX... / 24YZ............ / 34789 / ..»
+D 0x4862 0x4A2F flujo_del_titulo Flujo comprimido con su direccion de VRAM delante, 481 bytes de VRAM: lo suelta 0x4267 con un `jp` al descompresor
+D 0x4A2F 0x4A65 guion_del_titulo El guion que 0x423C recorre byte a byte: una cuenta y, segun su bit 7, copia ocho bytes o los rellena; el 0x00 del final lo cierra. Es lo que va montando la pantalla del titulo detras del flujo comprimido de 0x4862
+F 0x4A2F 8
+L 0x4A65 PREPARA_LA_CORTINILLA  Deja 17 pasos en E00D y el cursor de la cortinilla en la fila 21, y carga los tiles del logotipo
+C 0x4A65 Diecisiete filas por subir
+C 0x4A6A Fila 21, columna 10: por donde empieza
+C 0x4A79 Blanco sobre transparente en 0xD0 casillas de color de los tres tercios
+L 0x4A84 SUBE_EL_LOGOTIPO     Una fila mas arriba por llamada: pinta las tres tiras del logotipo y borra el rastro
+C 0x4A84 El cursor sube 32 casillas: una fila
+C 0x4A8E Tres tiles arriba, doce en medio y doce abajo
+C 0x4A9F Y doce ceros debajo, que borran lo que dejo la vuelta anterior
+C 0x4AA5 E00D cuenta las diecisiete filas; al llegar a cero, se acabo
+L 0x4AA7 TIRA_DE_TILES        B tiles consecutivos desde A, y luego baja una fila
+C 0x4AA8 El codigo de tile sube con la columna
+C 0x4AB0 Treinta y dos: la fila de debajo, para la llamada siguiente
+D 0x4AB5 0x4B48 tiles_del_logotipo Flujo comprimido SIN direccion delante: los tiles con los que se dibuja el logotipo HYPER SPORTS 2, que 0x4A70 mete en los TRES tercios desde la VRAM 0x2300
+L 0x4B48 MONTA_LA_PRUEBA      Borra la RAM del juego, deja tres intentos y llama a lo que monta la prueba que toque
+C 0x4B51 0x17E bytes desde E081 a cero, de un ldir que se copia a si mismo
+C 0x4B5E Y 0x18 bytes desde E090 a 0xFF
+C 0x4B6C Tres intentos, salvo que E070 este a cero: entonces dos
+C 0x4B7B Los dos bits bajos de E080: la prueba, y su tabla detras
+D 0x4B80 0x4B86 tabla_de_4B80 Las 3 palabras del despacho de 0x4B7D, pegadas detras de su call: 0x4C61 0x4CA0 0x4C74. Cierra clavada contra su destino mas bajo hacia delante
+F 0x4B80 w1
+L 0x4B86 PREPARA_EL_INTENTO   Pone a cero los puntos del intento y la RAM de 0xE100, y llama a lo que arranca la prueba
+C 0x4B8A Los tres bytes de los puntos de este intento
+C 0x4B9C 0x100 bytes de E100 a cero
+C 0x4BA6 E07E = 4
+C 0x4BAC Otra vez la prueba, con su tabla propia
+D 0x4BB1 0x4BB7 tabla_de_4BB1 Las 3 palabras del despacho de 0x4BAE, pegadas detras de su call: 0x4BB7 0x4C25 0x4BFB. Cierra clavada contra su destino mas bajo hacia delante
+F 0x4BB1 w1
+L 0x4BB7 ARRANCA_SKEET        La primera prueba: deja la ventana en E142, el ritmo en E1A6 y las dos fichas de sprite
+C 0x4BBF Por encima de 0x1C se clava en 0x18
+C 0x4BC5 Por ocho y quedandose los tres bits altos
+C 0x4BC6 Por cuatro y sin los bits bajos
+C 0x4BCA Y sumado a 0x01C0: la velocidad de partida
+C 0x4BD3 E1A6 a 0x15
+C 0x4BD8 Y E172 a dos
+C 0x4BDD Los 0x40 bytes de fichas de sprite a 0xE0, que las aparca
+L 0x4BE2 APARCA_LAS_FICHAS    Deja 0xE0 en los 0x40 bytes de fichas
+C 0x4BE2 0xE0 en las Y: las fichas se van de la pantalla
+C 0x4BED Ocho bytes: dos fichas
+D 0x4BF3 0x4BFB ocho_a_e0c0 Los ocho bytes que 0x4BE7 copia con un ldir a 0xE0C0: dos fichas de sprite
+F 0x4BF3 4
+L 0x4BFB ARRANCA_WEIGHT       La tercera: pone el ritmo, la barra en E120 y los valores de arranque
+C 0x4C01 0x30 de ritmo: mas lento que el skeet
+C 0x4C0A E120 y E121, con 0x05FF
+C 0x4C0D E120 y E121, el reloj de la prueba
+C 0x4C15 E107 arranca en 0x17
+C 0x4C1C E104, el patron de partida
+C 0x4C1F E089, la marca a batir
+L 0x4C25 ARRANCA_ARCHERY      La segunda: las ocho fichas de sprite de 0x4C3D y los valores de la flecha
+C 0x4C25 Las ocho fichas de sprite de 0x4C3D
+C 0x4C2B 0x20 bytes: ocho fichas
+C 0x4C32 E145 = 3
+C 0x4C37 E111 = 7
+D 0x4C3D 0x4C5D treinta_y_dos_a_e0c0 Los 0x20 bytes que 0x4C25 copia con un ldir a 0xE0C0: ocho fichas de sprite
+F 0x4C3D 4
+D 0x4C5D 0x4C61 cuatro_detras_de_las_fichas Los cuatro bytes que quedan detras de las ocho fichas de sprite de 0x4C3D (F1 F2 F2 F2). El ldir de 0x4C25 no los alcanza -copia 0x20- y ninguna instruccion los apunta
+F 0x4C5D 4
+L 0x4C61 PREPARA_MARCADOR_SKEET  Coge el liston de la tabla de 0x4C6E y apunta E08B a E059
+D 0x4C6E 0x4C74 dificultad_del_weight Seis bytes que 0x4CAD indexa con (0xE080) desplazado dos bits y topado en 5: 0x20, 0x30, 0x35, 0x40, 0x42, 0x45. Suben con la vuelta, asi que es el liston que hay que levantar
+F 0x4C6E 3
+L 0x4C74 PREPARA_MARCADOR_WEIGHT  El peso de partida sale de la tabla de 0x6F48, indexada por la vuelta
+C 0x4C77 E080 desplazado dos bits: la vuelta, no la prueba
+C 0x4C7B Por encima de la octava vuelta se clava en la septima
+C 0x4C86 La tabla de pesos, por dos porque son palabras
+C 0x4C97 0xF2 en el tercer byte
+L 0x4CA0 PREPARA_MARCADOR_ARCHERY  Apunta E08B a E056 y coge su liston de la tabla de 0x4CC2
+L 0x4CAD LISTON_POR_VUELTA    Saca de la tabla de HL el liston de esta vuelta y lo deja en E085
+C 0x4CB0 Otra vez la vuelta: E080 sin los dos bits de la prueba
+C 0x4CB4 De la sexta en adelante, el liston ya no sube
+D 0x4CC2 0x4CC8 dificultad_del_archery Los seis de la otra prueba, con el mismo indice: 0x25, 0x28, 0x32, 0x35, 0x38, 0x40
+F 0x4CC2 3
+L 0x4CC8 UN_FOTOGRAMA_DE_LA_PRUEBA  Despacha al fotograma de la prueba que toque, por los dos bits bajos de E080
+D 0x4CD0 0x4CD6 tabla_de_4CD0 Las 3 palabras del despacho de 0x4CCD, pegadas detras de su call: 0x4EBA 0x528D 0x5147. Cierra clavada contra su destino mas bajo hacia delante
+F 0x4CD0 w1
+L 0x4CD6 PINTA_LA_MARCA       Pinta el numero de DE; por encima de 0xA0 son dos cifras y una unidad de dos tiles
+C 0x4CD9 Por debajo de 0xA0 van las tres cifras de siempre
+C 0x4CDF 0xFF: no hay marca que pintar
+C 0x4CE7 Los tiles 0x1E y 0x1F: la unidad que va detras del numero
+L 0x4CF5 REPINTA_LOS_INTENTOS  La lista de 0x4CFB: YOU y los tres intentos
+D 0x4CFB 0x4D19 lista_4CFB YOU y los tres intentos, que es lo que se repinta al cambiar de intento. Descifrada con tools/textos.py (el numero de tile no es el ASCII): «YOU / 1.TRY / 2.TRY / 3.TRY»
+L 0x4D19 PINTA_LAS_MARCAS     El liston de la prueba, la marca de la vuelta y la del intento
+C 0x4D19 Fila 1, columna 19
+C 0x4D22 Por tres y en negativo: cada prueba tiene su liston tres bytes mas abajo de E05B
+C 0x4D2E Fila 3, columna 23: la marca de la vuelta
+C 0x4D31 La marca de E086
+L 0x4D37 PINTA_LA_MARCA_DEL_INTENTO  La de E092, en la fila 5, y el rotulo de la vuelta
+C 0x4D37 Fila 5, columna 7
+L 0x4D43 PINTA_LOS_TRES_INTENTOS  Las tres marcas de E09E, una por fila
+C 0x4D43 Fila 4, columna 23
+C 0x4D49 Tres intentos
+C 0x4D51 Treinta y dos: la fila de abajo
+L 0x4D59 ESPERA_O_REPINTA     Mientras E08A este puesto, hace parpadear las marcas; si no, espera al sonido y suena el aviso
+C 0x4D5E Con E08A a cero se pasa a la espera de abajo
+C 0x4D69 Bit 4 del contador: 16 fotogramas con las marcas y 16 sin
+C 0x4D76 Y con el canal callado, se repintan
+L 0x4D80 AVISA_Y_ESPERA       Cuando el sonido de fondo calla, sube E08A y suena el aviso de fin
+C 0x4D83 E036: mientras el sonido siga, nada
+C 0x4D8C El sonido 0x9F, el de terminar
+D 0x4D94 0x4D99 rle_4D94 Flujo comprimido con su direccion de VRAM delante: 7 bytes de VRAM
+L 0x4D99 GUARDA_LA_MARCA_DEL_INTENTO  Copia los tres bytes de los puntos al hueco del intento que toca (tres por intento)
+C 0x4D9F Por tres: cada intento ocupa tres bytes
+C 0x4DA0 Por tres: tres bytes por registro
+C 0x4DA5 Los puntos del intento
+L 0x4DAE PINTA_EL_AVISO       El tile 0xA0 o 0xA1 en la fila 5 segun lo que valga E073
+C 0x4DAE E073, la bandera del aviso
+C 0x4DB5 Fila 5, columna 14
+L 0x4DBB TILE_DEL_AVISO       0xA1 con E073 a cero, 0xA0 con uno, y nada con mas
+C 0x4DBD Con la prueba 0, el sonido 0xA1
+C 0x4DC4 Y con la 1, el 0xA0
+L 0x4DC9 COPIA_E071_A_E073    Lo que haya en E071 pasa a E073
+L 0x4DD0 CAMBIA_DE_PRUEBA     Borra la pantalla, sube la prueba dando la vuelta a las tres, y monta la siguiente entera
+C 0x4DD7 Tres pruebas: de la 2 se vuelve a la 0
+C 0x4DDE E08E y E08F a cero
+C 0x4DE5 La fuente, la prueba, el intento, el marcador y el fondo
+L 0x4DF4 FOTOGRAMA_CON_VUELTA  Empuja 0x4CC8 y despacha por la prueba: al volver, corre el fotograma de la prueba
+D 0x4DFE 0x4E04 tabla_de_4DFE Las 3 palabras del despacho de 0x4DFB, pegadas detras de su call: 0x4E04 0x4E30 0x4EA3. Cierra clavada contra su destino mas bajo hacia delante
+F 0x4DFE w1
+L 0x4E04 SKEET_ENTRE_INTENTOS  Con E171 por debajo de 0x14, mueve los dos platos y ajusta la ficha segun E1AA
+C 0x4E06 E1AB a uno: mientras dure, los disparos solo se apuntan
+C 0x4E09 E171, por donde va la tanda
+C 0x4E0C Pasado 0x14 no queda plato que mover
+C 0x4E1E Y el canon de abajo
+C 0x4E23 E1AA: si le ha dado, el mando se falsea
+C 0x4E2B E1AB otra vez a cero
+L 0x4E30 ARCHERY_ENTRE_INTENTOS  Baja E08F y, mientras quede, mueve la diana con la tabla de 0x4E6D
+C 0x4E30 E08F, lo que le queda a la diana en esa postura
+C 0x4E38 El patron que le toca
+C 0x4E41 Sin nada en E08F, el patron cambia con un xor: la diana se da la vuelta
+C 0x4E43 El patron se deja en E045
+L 0x4E47 ARCHERY_SIGUIENTE_DIANA  Coge de la tabla de 0x4E6D lo que dura la diana siguiente y avanza el indice
+C 0x4E4A E08E, por que diana va
+C 0x4E51 E08F: los fotogramas que aguanta
+L 0x4E5C ARCHERY_ALTURA_DE_LA_DIANA  De la otra tabla, con el mismo indice, sale el patron que se queda en E043 y E044
+C 0x4E5C La tabla de patrones, con el mismo indice
+C 0x4E66 El mismo patron en E043 y E044
+D 0x4E6D 0x4E88 tabla_de_4E47 Los bytes que 0x4E47 indexa con (0xE08E) para dejar (0xE08F)
+F 0x4E6D 9
+D 0x4E88 0x4EA3 tabla_de_4E5C La segunda, que indexa 0x4E5C con el mismo formato
+F 0x4E88 9
+L 0x4EA3 WEIGHT_ENTRE_INTENTOS  Baja E08F y, segun su bit alto, refresca cada 4 u 8 fotogramas
+C 0x4EA8 El bit alto de lo que queda elige el ritmo
+C 0x4EB2 Uno de cada cuatro fotogramas, o de cada ocho
+L 0x4EBA FOTOGRAMA_DEL_SKEET  Empuja 0x4F87 y despacha por E1A1: los siete pasos de la prueba de tiro al plato
+D 0x4EC4 0x4ED2 tabla_de_4EC4 Las 7 palabras del despacho de 0x4EC1, pegadas detras de su call: 0x4ED2 0x4EF3 0x4EFA 0x4FD6 0x4FEA 0x501A 0x50DC. Cierra clavada contra su destino mas bajo hacia delante
+F 0x4EC4 w1
+L 0x4ED2 SKEET_PASO_0         Espera a que calle el sonido, deja el cursor en la fila 22 y suena el aviso de empezar
+C 0x4ED2 E036: mientras suene algo, no se arranca
+C 0x4ED7 Fila 22, columna 21
+C 0x4EE0 El sonido 0x99: preparados
+L 0x4EE5 ESPERA_128           E004 = 128 fotogramas y al paso siguiente
+C 0x4EE5 0x80 fotogramas, que son mas de dos segundos
+L 0x4EEA PASO_SIGUIENTE_DEL_SKEET  E1A9 a cero y sube E1A1
+C 0x4EEB E1A9 a cero: los sprites se refrescan
+C 0x4EEE E1A1 es el paso de la prueba
+L 0x4EF3 SKEET_PASO_1         Espera a que se agote E004
+C 0x4EF3 E004, lo que queda de espera
+L 0x4EFA SKEET_PASO_2_EN_JUEGO  El fotograma gordo: los platos, la escopeta, los disparos, los impactos y el marcador
+C 0x4EFA El reloj, los platos y la escopeta
+C 0x4F0C E170 es lo que queda de la tanda
+C 0x4F16 E172 = 2
+C 0x4F1C Bits 3-4 de los mandos: con el gatillo, el sonido del disparo
+C 0x4F2D La marca del intento y sus tres numeros
+C 0x4F39 Con E172 a cero se rearma la tanda: 0x18 platos
+C 0x4F44 Mientras E1A5 o E1A6 no esten a cero, no se mira el final
+C 0x4F4B Los tres platos de E100, de 0x10 en 0x10: si alguno sigue vivo, no se acaba
+C 0x4F59 E199 marca el desempate
+C 0x4F63 La primera vez lleva a 0x761A y la segunda a 0x762F
+C 0x4F6D E151: mientras haya algo en marcha, se espera
+C 0x4F7D La dificultad sube hasta siete y ahi se queda
+L 0x4F87 DETRAS_DEL_PASO      Lo que corre despues de cada paso de la prueba: los sprites a la VRAM y el corte de la tabla
+C 0x4F90 Los 0x30 bytes de fichas de E0C0 a la tabla de sprites
+C 0x4F9E Y 0xD0 en la Y de la siguiente: el VDP deja de dibujar ahi
+L 0x4FA3 GASTA_EL_TIEMPO      Resta 1,67 al reloj de E1A4 en BCD; al llegar a negativo lo clava en cero
+C 0x4FA7 0x67 al byte bajo y 1 al de arriba: 1,67 por fotograma, o sea un segundo cada 60
+C 0x4FA9 El daa: el reloj va en BCD
+C 0x4FAD Y los otros dos bytes con el acarreo
+C 0x4FB7 En negativo, el reloj se queda a cero
+L 0x4FBE PINTA_EL_RELOJ       Los minutos, el tile 0x1B de separador y los segundos
+C 0x4FC9 El tile 0x1B: los dos puntos del reloj
+C 0x4FD1 C a 0xFF: los ceros de los segundos SI se pintan
+L 0x4FD6 SKEET_PASO_3_GUARDA  Se queda con la mejor marca de este intento, en el hueco del jugador que toca
+C 0x4FD9 El bit 7 de E002 dice si juega el segundo
+L 0x4FEA SKEET_PASO_4_LISTON  Compara la marca con el liston: si llega, deja E071 a uno
+C 0x4FF5 Con acarreo no llega al liston
+L 0x5000 GUARDA_Y_PINTA       Pasa E071 a E073, repinta y mira si es record
+C 0x500D Contra el record del marcador (E08B)
+C 0x5012 E08D a uno: hay record nuevo
+L 0x501A SKEET_PASO_5_FIN     Suena lo que toque -aviso o fanfarria- y espera; luego, el remate de la prueba
+C 0x5027 E1A3 dice si ha calificado
+C 0x502D El sonido 0xA8 si ha calificado, el 0x01 si no
+C 0x5033 Y la espera: 0xC0 fotogramas o ninguno
+L 0x5040 SKEET_PASO_5_ESPERA  Mientras E004 baja, cada prueba hace lo suyo
+L 0x5047 REMATE_DE_LA_PRUEBA  Baja E004 y, hasta que llegue a cero, despacha al remate de la prueba que toque
+C 0x5047 E004, lo que queda de remate
+D 0x5054 0x505A tabla_de_5054 Las 3 palabras del despacho de 0x5051, pegadas detras de su call: 0x505A 0x50B8 0x5065. Cierra clavada contra su destino mas bajo hacia delante
+F 0x5054 w1
+L 0x505A REMATE_DEL_SKEET     Deja en E151 el patron que toque y devuelve NZ para que la espera siga
+L 0x5062 SIGUE_ESPERANDO      Devuelve con el bit 0 puesto: aun no ha terminado
+L 0x5065 REMATE_DEL_WEIGHT    Con la barra arriba del todo (E132=5) pinta las dos filas de tiles y sigue con el levantador
+C 0x5069 El 5 es la postura de haber levantado
+C 0x5071 Fila 16, columna 7: doce tiles
+C 0x5079 Y la fila de al lado, otros doce con el tile siguiente
+C 0x5086 E1A3: si ha calificado, un patron; si no, el otro
+C 0x5094 Bit 4 del contador: el levantador parpadea
+C 0x50A0 Bit 2 del contador: alterna los dos flujos, 0x7230 y 0x7241
+C 0x50B2 Y solo si ha calificado
+L 0x50B8 REMATE_DEL_ARCHERY   Pinta la lista de 0x6627 y sigue por 0x5EBB o 0x5EBE segun haya calificado
+C 0x50B8 El rotulo de 0x6627
+C 0x50BE E1A3: con el levantamiento valido, la ceremonia sigue
+L 0x50C8 PATRON_QUE_PARPADEA  3, 4 o 5 segun haya calificado y segun el bit 5 del contador
+C 0x50C8 E1A3 otra vez: el patron cambia
+C 0x50CF El contador de fotogramas
+C 0x50D2 Bit 5: dieciseis fotogramas con cada patron
+L 0x50DC ACABA_LA_PRUEBA      E081 a uno: el estado 6 lo lee y da el intento por terminado
+L 0x50E2 COLOCA_LOS_TRES_PLATOS  Para cada uno de los tres platos de E100, deja su X, su Y y el patron y color que le toquen
+C 0x50E2 Los tres platos, de 0x10 en 0x10
+C 0x50EB +2 es la Y y +4 la X
+C 0x50FC La postura 5 con el bit 2 del contador a cero cuenta como la 7: asi parpadea al romperse
+C 0x5108 La tabla de parejas patron/color
+C 0x5115 Y al plato siguiente, 0x10 bytes mas alla
+D 0x511D 0x512D dieciseis_de_5108 Los bytes que 0x5108 recorre de dos en dos, indexados con DE_MAS_A
+F 0x511D 2
+L 0x512D SACUDE_EL_PRIMER_PLATO  Con el primer plato en la postura 5 o mas, le da un empujon de +0x40 o -0x40 cada 16 fotogramas
+C 0x5130 Por debajo de la postura 5 no hay nada que sacudir
+C 0x5136 Bit 4 del contador: hacia un lado o hacia el otro
+C 0x5138 0x40 arriba o 0xC0 abajo
+C 0x5140 E105 y E115, la altura y su copia
+L 0x5147 FOTOGRAMA_DEL_WEIGHT  Empuja 0x521C y despacha por E1A1: los once pasos de la halterofilia
+D 0x5151 0x5167 tabla_de_5151 Las 11 palabras del despacho de 0x514E, pegadas detras de su call: 0x5167 0x518B 0x51AA 0x51BA 0x51C2 0x522E 0x4FD6 0x5000 0x501A 0x525B 0x50DC. Cierra clavada contra su destino mas bajo hacia delante
+F 0x5151 w1
+C 0x514B Los pasos 6, 7, 8 y 10 son los MISMOS que los del skeet: guardar la marca, mirar el liston, el final y acabar
+L 0x5167 WEIGHT_PASO_0        Espera al sonido, agota E004 y, en cuanto se toca el mando, arranca
+C 0x5167 Mientras suene algo, nada
+C 0x516A Mientras suene algo, no se sigue
+C 0x516F E004, la espera
+C 0x5176 E07D y E07E: el contador largo, en 0x0400
+C 0x517E Los cuatro bits bajos del mando: cualquier direccion arranca
+L 0x518B WEIGHT_PASO_1        Cada cuatro fotogramas baja E004; el mando lo reinicia
+C 0x518E Uno de cada cuatro fotogramas
+C 0x519C Los cinco bits bajos del mando: al tocarlo, la espera vuelve a empezar
+L 0x51AA WEIGHT_PASO_2        Espera a que calle el sonido y suena el 0x99, el de preparados
+C 0x51AD Mientras suene algo, no se sigue
+C 0x51B2 El sonido 0x99, el de preparados
+L 0x51BA WEIGHT_PASO_3        Solo espera a que el sonido acabe
+L 0x51C2 WEIGHT_PASO_4_EN_JUEGO  El fotograma gordo: el reloj, la barra, la potencia y las luces del jurado
+C 0x51C2 Se tira la direccion de retorno: este paso no vuelve por donde vino
+C 0x51C3 Fila 16, columna 23: donde va el reloj
+C 0x51D3 Con el reloj a cero se acaba
+C 0x51DA Al llegar a 5,00 suena el aviso de que queda poco
+C 0x51DC El sonido 0x07
+C 0x51E1 E101 se copia a E108: la potencia de antes
+C 0x51ED Con la potencia a cero y la de antes tambien, se acaba
+C 0x51F9 La barra, sus fichas y las luces del jurado
+C 0x520B E1A3: el levantamiento dado por bueno
+C 0x5210 Y con el levantamiento valido, la marca se copia a los puntos del intento
+L 0x5216 GUARDA_Y_ESPERA      Guarda la marca del intento y espera 128 fotogramas
+L 0x521C DETRAS_DEL_PASO_DEL_WEIGHT  Refresca los sprites si E1A9 lo permite y los sube a la VRAM
+L 0x5223 SUBE_LAS_FICHAS      Los 0x3D bytes de fichas de E0C0 a la tabla de sprites
+L 0x522E WEIGHT_PASO_5        Con el mando y el levantamiento dado por bueno, sube la postura; luego espera al sonido y cobra
+C 0x5231 Sin levantamiento valido no se sube nada
+C 0x5237 Bit 3 del mando
+C 0x523F Mientras el canal de E012 suene, se espera
+C 0x524B La postura 5 es la buena: entonces se cobran 0x20 puntos
+L 0x525B WEIGHT_PASO_9        Copia el flujo de 0x7230 a la VRAM y deja la marca sacada de la tabla de 0x5285
+C 0x5266 Con el levantamiento valido, C baja a 0x0F: el and de abajo deja otra cifra
+C 0x526D E110, el indice de la marca
+C 0x5270 La tabla de ocho de 0x5285
+C 0x5276 E087, los puntos del intento
+C 0x527A El and con C: con el levantamiento valido sale otra cifra
+D 0x5285 0x528D ocho_de_5270 Los ocho bytes que 0x5270 indexa y luego pasa por un and con C
+F 0x5285 8
+L 0x528D FOTOGRAMA_DEL_ARCHERY  B se queda con el submodo (E10A) y se despacha por E1A1: los siete pasos del tiro con arco
+D 0x5297 0x52A5 tabla_de_5297 Las 7 palabras del despacho de 0x5294, pegadas detras de su call: 0x52A5 0x52C4 0x52D2 0x4FD6 0x4FEA 0x501A 0x50DC. Cierra clavada contra su destino mas bajo hacia delante
+F 0x5297 w1
+C 0x5291 Como en el archery, los pasos 3, 4, 5 y 6 son los mismos que los del skeet
+L 0x52A5 ARCHERY_PASO_0       Pinta la lista de 0x6643, espera 0x30 y arranca el submodo 1
+C 0x52A5 0x30 fotogramas
+C 0x52A7 E004, los fotogramas de espera
+C 0x52AA El fondo de la prueba
+C 0x52B0 Mientras suene algo, no se arranca
+L 0x52B5 SUBE_EL_PASO_Y_ARRANCA  Sube E1A1 y deja el submodo (E10A) en 1
+C 0x52B5 E1A1 es el paso de la prueba
+C 0x52B9 Y E10A el submodo
+L 0x52BF SUBMODO_SIGUIENTE    E10A + 1
+L 0x52C4 ARCHERY_PASO_1       Agota E004 y, al llegar a cero, otros 0x50 y al paso siguiente
+C 0x52C4 E004, lo que queda de espera
+L 0x52D2 ARCHERY_PASO_2_EN_JUEGO  Reparte por el submodo: 0 el remate, 1 la cuenta atras y 2 en adelante el tiro
+C 0x52D9 E205 decide si se acaba o se sigue
+C 0x52E4 E004, la cuenta atras
+C 0x52ED Y el aviso de que queda poco
+C 0x52F5 E147 dice cual de los dos motores mueve la figura
+C 0x5302 Con el motor parado, el submodo vuelve al 2
+L 0x5307 ARCHERY_MUEVE         Mira el mando y, con el tiro en marcha, sacude la figura y la flecha
+C 0x5310 Bit 4 del mando: el boton
+C 0x5327 Pasada la X 0xE3, el remate
+L 0x532C COLOCA_LOS_SPRITES_DEL_TIRO  Reparte las Y de los sprites: cada uno 0x10 mas abajo que el anterior
+C 0x532C E147 dice cual de los dos repartos toca
+C 0x5340 Menos 0x1A: el ultimo sprite va mas arriba que los demas
+L 0x5347 ARCHERY_SIN_VUELO     El otro reparto, cuando la flecha no esta en el aire
+L 0x534D REPARTE_LAS_Y        Las Y de seis fichas en tres alturas a partir de la de E0C4: dos a su altura, dos 0x10 mas abajo y dos 0x20
+C 0x5353 La segunda pareja, 0x10 mas abajo
+C 0x535B Y la tercera, otros 0x10
+L 0x536C GUARDA_Y_SUBE_LAS_FICHAS  Guarda la marca, la pinta y sube 0x2C bytes de fichas a la VRAM
+C 0x5375 0x2C bytes: once fichas
+C 0x5384 Y 0xD0 en la Y de la doceava: el VDP para ahi
+L 0x5389 REPARTE_LOS_PATRONES  Cuatro sprites con el patron 0x20, otros cuatro con el 0x30 y ocho a cero
+C 0x5390 Los cuatro primeros, con el patron 0x20
+C 0x5395 Y los cuatro siguientes con el 0x30
+C 0x539A Los ocho de detras, a cero
+L 0x53A0 CADA_CUATRO_BYTES     Escribe A cada cuatro casillas: el patron de una ficha de sprite
+C 0x53A3 Cuatro bytes por ficha: solo se toca el patron
+L 0x53AA ARCHERY_REMATE        Suena el 0x04, mueve la flecha y, pasada la X 0x1F, da el tiro por bueno
+C 0x53AD Solo si no hay nada sonando
+C 0x53C2 E205 a uno: el tiro esta hecho
+C 0x53C5 Y la lista de 0x6635, el rotulo de haberlo conseguido
+C 0x53CE 0x50 fotogramas de espera
+L 0x53D9 SUENA_AL_LLEGAR      Con la flecha justo en 0x4C y E111 en 7, suena el aviso
+C 0x53D9 Solo con la flecha justo en el 0x4C
+C 0x53DD Y E111 en 7
+C 0x53E3 El sonido 0x99
+L 0x53E8 EMPIEZA_EL_TIRO      Baja los sprites, pinta la lista de 0x6643 y suena una sola vez
+C 0x53E8 0xC0 en la Y: los sprites bajan de golpe
+C 0x53FA E11B evita que suene mas de una vez
+L 0x5404 REMATA_EL_TIRO       Con E11A a cero arranca la animacion del remate, y luego apaga las banderas
+C 0x5407 E11A: solo la primera vez
+C 0x5411 Otra vez los dos motores, segun E147
+C 0x541C E117: solo si ha acertado se cobra
+C 0x5422 Sin acertar, cero puntos
+C 0x542B Pasada la X 0xF7, la flecha se suelta
+C 0x542E 0xC0 en la Y: la ficha se aparca
+C 0x5438 E147 dice cual de los dos motores va
+C 0x5441 Los puntos del anillo, sumados
+C 0x5444 0x10 fotogramas de cuenta atras
+C 0x5449 E115 y E116 a cero: el tiro se para
+C 0x5451 E118 a uno: se ha terminado de mover
+L 0x5455 BAJA_EL_CONTADOR_LARGO  Resta uno al contador de 16 bits de E07D; devuelve acarreo si sigue vivo y el mando esta puesto
+C 0x5458 El byte bajo del contador
+C 0x5462 Y ademas hay que estar pulsando lo que diga C
+L 0x5469 FOTOGRAMA_DE_LA_TABLA_DE_RECORDS  Con el bit 2 de E080, la pantalla de records: cinco pasos por E241
+C 0x546C Bit 2 de E080: la vuelta que toca tabla
+D 0x547C 0x5486 tabla_de_547C Las 5 palabras del despacho de 0x5479, pegadas detras de su call: 0x5495 0x54E1 0x54E8 0x54ED 0x5486. Cierra clavada contra su destino mas bajo hacia delante
+F 0x547C w1
+L 0x5486 RECORDS_PASO_4       Espera al sonido y pasa a la prueba siguiente
+L 0x548B PRUEBA_SIGUIENTE     Sube E080 y avisa con E081
+L 0x5495 RECORDS_PASO_0       Monta la pantalla entera de records: el fondo, los rotulos y las cifras
+C 0x5495 El sonido 0xAB, el de la tabla
+C 0x54AC La lista de 0x55FA, con el WORLD RECORD
+C 0x54B2 Fila 4, columna 3
+C 0x54B5 Las tres filas de rotulos y el marco
+C 0x54BF E23E a cero
+L 0x54C2 PASO_SIGUIENTE_DE_RECORDS  Sube E241
+C 0x54C2 E241 es el paso de la tabla de records
+L 0x54C7 ARRANCA_LA_ANIMACION  Guarda las dos poses (0xE24B y 0xE24D), borra los 0x20 bytes de trabajo de 0xE222 y arranca
+C 0x54CE 0x1F bytes a cero con un ldir que se copia a si mismo
+C 0x54DC E23A a uno: el motor arranca
+L 0x54E1 RECORDS_PASO_1        Espera a que E23E llegue a cero
+L 0x54E8 RECORDS_PASO_2        La figura que se mueve; cuando E23A vuelve a cero, al paso siguiente
+L 0x54ED RECORDS_PASO_3        Lo mismo con el otro motor, el de 0x555A
+C 0x54F3 E23A dice si el motor ha terminado
+L 0x54F9 MUEVE_LA_FIGURA       Cada dos fotogramas avanza E23F y, segun por donde vaya, copia una pose o interpola hacia ella
+C 0x54FF Uno de cada dos fotogramas
+C 0x5507 A los 0x20 pasos se cambia de pose
+C 0x550C Los cuatro primeros pasos y los que pasan de 0x1C: la pose entera, copiada
+C 0x5521 Los 0x18 bytes de la pose, a la zona de trabajo
+C 0x5530 Cinco poses y se acaba
+L 0x5534 INTERPOLA_LA_POSE     Suma o resta a cada uno de los seis sprites el paso que dice la tabla de 0x5718
+C 0x5536 La tabla de pasos, indexada por donde va la animacion
+C 0x5544 El bit 4 dice si se suma o se resta
+C 0x554B Cuatro bytes: al siguiente sprite
+C 0x554C Tres bytes por marca
+L 0x5551 DEVUELVE_NZ           Sale con 0xFF: la animacion sigue
+L 0x5554 ACABA_LA_ANIMACION    Baja E23A, que es lo que mira el paso para seguir
+C 0x5554 E23A, la cuenta de la animacion
+L 0x555A PASA_LAS_MARCAS       Uno de cada ocho fotogramas: va sacando las marcas de la tabla, fila a fila
+C 0x555D Uno de cada ocho
+C 0x5566 A los 0x11 pasos, marca siguiente
+C 0x5570 Tres marcas y se acaba
+C 0x5580 Un paso si y otro no: en uno se borra la fila y en el otro se pinta
+L 0x5589 REPINTA_LA_FILA       Fila 4, columna 3: las tres filas de dieciseis
+L 0x558F PINTA_LAS_TRES_MARCAS  Las tres marcas, cada una en su casilla y con su liston
+C 0x558F La marca de mas abajo
+C 0x5597 La de en medio
+C 0x559F Y la de arriba
+L 0x55A4 PINTA_LA_MARCA_DEL_RECORD  Una de las tres marcas de la tabla de records: su cifra y, tres bytes mas alla, el liston de esa prueba
+C 0x55A4 0x11 casillas mas a la derecha
+C 0x55AC Por tres: cada prueba tiene su liston tres bytes mas abajo de E05B
+L 0x55B8 GIRA_EL_MARCO         Uno de cada ocho fotogramas, corre el patron del marco: parece que da vueltas
+C 0x55BB Uno de cada ocho
+L 0x55C8 PINTA_EL_MARCO        El marco entero, con el patron de partida en C
+C 0x55CA Fila 0, columna 3
+C 0x55D0 0x1A tiles a lo ancho
+C 0x55D5 0x20 de salto: la columna de al lado
+C 0x55DA Una casilla menos: la fila de abajo, del reves
+C 0x55E2 Y 0x20 menos: subiendo
+L 0x55E5 DIEZ_DE_ALTO          Los diez de un lado
+C 0x55E5 Diez de alto
+L 0x55E7 TIRA_DEL_MARCO        B tiles del marco, cada uno con el patron siguiente de los cuatro
+C 0x55E9 Cuatro patrones que se van turnando
+C 0x55EB 0x3C es el primero de los cuatro tiles del marco
+D 0x55F4 0x55FA casillas_de_las_marcas Tres palabras con la casilla de la VRAM de cada una de las tres marcas de la tabla de records: 0x3885, 0x38C5 y 0x3905, o sea las filas 4, 6 y 8. Las lee 0x558F, y 0x5575 las indexa por dos con (0xE23C)
+F 0x55F4 w1
+D 0x55FA 0x564B lista_del_marco Lista de tiles con el marco de la tabla de records y el rotulo. Descifrada con tools/textos.py: «0112 / 3..4 / 7885..6889 / 5...AB...6 / 5...CD...6 / 5........6 / WORLD RECORD»
+D 0x564B 0x56BB rle_564B Flujo comprimido con su direccion de VRAM delante: 164 bytes de VRAM
+D 0x56BB 0x56E8 rle_56BB Flujo comprimido con su direccion de VRAM delante: 164 bytes de VRAM
+D 0x56E8 0x5700 registros_de_cuatro_A Seis registros de cuatro bytes que 0x54A0 pasa como segundo puntero a 0x54C7, que los guarda en 0xE24D
+F 0x56E8 4
+D 0x5700 0x5718 registros_de_cuatro_B Otros seis, que 0x549D pasa como primero y 0x54C7 guarda en 0xE24B
+F 0x5700 4
+D 0x5718 0x5738 tabla_de_5536 Los bytes que 0x5536 indexa, y que compara contra los seis de 0xE222
+F 0x5718 8
+B 0x5738 ----------------------------------------------------------------------
+B 0x5738 EL LANZADOR DE PLATOS. Cada 0x18 fotogramas busca una de las tres
+B 0x5738 ranuras de 0xE100 que este libre y suelta un plato. Ni la direccion
+B 0x5738 ni la altura salen de un azar de verdad: se leen BIT A BIT de dos
+B 0x5738 tablas, la de 0x583E y la de 0x5866, cada una recorrida con su
+B 0x5738 propio contador. El mismo cartucho lanza siempre igual.
+B 0x5738 ----------------------------------------------------------------------
+L 0x5738 LANZA_UN_PLATO       Cada 0x18 fotogramas suelta un plato por la ranura que este libre
+C 0x5738 Mientras E1A5 o E1A6 no esten a cero, no se lanza nada
+C 0x5743 E140: la cuenta atras entre plato y plato
+L 0x574C BUSCA_RANURA_LIBRE   Las tres ranuras de 0xE100, de 0x10 en 0x10
+C 0x574D La primera con el estado a cero
+L 0x5757 SUELTA_EL_PLATO      Rellena la ranura: 0x18 fotogramas hasta el siguiente y la postura de partida
+C 0x5757 Otros 0x18 fotogramas hasta el proximo
+C 0x575B E171 cuenta los platos de la tanda
+C 0x5762 En el plato 0x0E se lanzan de dos en dos...
+C 0x5767 ...y en el 0x1D, de tres en tres
+C 0x5774 Tres rra: el contador entre ocho da el byte de la tabla
+C 0x577A E074, la dificultad, elige de que fila de la tabla se lee
+C 0x5781 Cinco bytes por dificultad
+C 0x578C Los tres bits bajos: el bit dentro del byte
+L 0x5791 SACA_EL_BIT          Rota el byte hasta dejar en el acarreo el bit que toca
+C 0x5798 Y = 0x90: los platos salen de abajo
+C 0x579B Segun el bit, el plato sale hacia un lado o hacia el otro
+C 0x57A9 E142: la velocidad que se le pone
+C 0x57B6 E141 cuenta las alturas, y su tabla es la de 0x5866
+C 0x57BD Dos bits por altura: cuatro alturas distintas
+C 0x57BF La tabla de alturas, leida de dos en dos bits
+C 0x57C6 Los dos bits bajos del contador: cual de los cuatro pares
+L 0x57CB SACA_LOS_DOS_BITS    Rota de dos en dos hasta el par que toca
+C 0x57CB Dos rotaciones por par
+C 0x57D3 Y con los dos bits, la altura
+C 0x57D5 E200 se queda con la altura, de 0 a 3
+C 0x57D9 Y de ella salen las vueltas del bucle de abajo
+C 0x57E0 La velocidad partida por cuatro, con sra: con signo
+L 0x57E8 ACUMULA_LA_ALTURA    Suma la velocidad tantas veces como diga la altura
+C 0x57F0 Otra division por dos, ya para guardarla
+C 0x57F4 La velocidad, guardada del reves
+C 0x57FB La casilla de la ranura que toca
+C 0x5801 Por debajo de la altura 2, un patron; por encima, otro
+C 0x5803 El patron 0x20 o el 0x50 segun el lado
+L 0x5809 COLOCA_EL_SPRITE_DEL_PLATO  Deja el patron, el color y la marca de vivo en la ficha del plato
+C 0x5809 El patron
+C 0x580C El color 0x98
+C 0x580F Y la marca de vivo
+C 0x5817 El sonido 0x05: el lanzamiento
+C 0x581C E19B: si esta puesto, se apunta un plato mas
+L 0x5825 CASILLA_DE_LA_RANURA  De la direccion de la ranura saca la casilla de su ficha de sprite
+C 0x5825 El nibble alto de L dice la ranura
+C 0x582D Por seis: seis bytes por ranura en la tabla de fichas
+C 0x5831 La tabla de fichas arranca en el 0x80 de la pagina
+L 0x5836 CAMBIA_EL_SIGNO      Complemento a dos de DE: la velocidad hacia el otro lado
+C 0x583C El cpl de los dos bytes mas uno: complemento a dos
+D 0x583E 0x5866 direcciones_de_los_platos Cinco bytes por dificultad -ocho dificultades- que el lanzador lee BIT A BIT: cada bit dice hacia que lado sale el plato. Es lo que hace de azar, y por eso el cartucho lanza siempre igual
+F 0x583E 8
+D 0x5866 0x586F alturas_de_los_platos Nueve bytes que se leen de DOS EN DOS BITS: cuatro alturas posibles por pareja, con su propio contador (E141)
+F 0x5866 9
+L 0x586F CAEN_LOS_PLATOS      A cada plato vivo le suma la gravedad, que es mayor cuanto mas alto va, y lo mata al salirse por abajo
+C 0x5877 Solo las posturas 1, 2 y 3: las demas ya no caen
+C 0x5881 Por encima de la Y 0x60, la gravedad es 1...
+C 0x5889 ...entre 0x50 y 0x60, 6...
+C 0x588F ...y por debajo de 0x38, 0x10: cuanto mas arriba, mas despacio
+C 0x5891 El plato ya se fue del todo
+C 0x5899 La ranura se cierra
+C 0x589F La gravedad, sumada a la Y de 16 bits
+C 0x58A7 Pasado el 0x10 por abajo, el plato se apaga
+C 0x58AB La ranura se cierra y el plato se da por ido
+C 0x58B1 0x10 bytes: la ranura siguiente
+L 0x58B8 MUEVE_LOS_PLATOS     A cada plato vivo le suma su velocidad a la X y a la Y, las dos de 16 bits
+C 0x58B8 Las tres ranuras de plato de 0xE100
+C 0x58BB Y sus tres velocidades de 0xE105
+C 0x58C2 La ranura vacia se salta
+C 0x58C7 Dos parejas: la X y la Y
+L 0x58C9 SUMA_LAS_PALABRAS    De dos en dos bytes, C veces: lo que hay en DE se le suma a lo que hay en HL
+C 0x58CF Y el acarreo al byte alto
+C 0x58D3 C parejas
+C 0x58D8 Y al siguiente, 0x10 bytes mas alla
+L 0x58E3 MIRA_LOS_IMPACTOS    Para cada plato mira si el disparo le ha dado, y si si, lo revienta
+C 0x58E6 Las tres ranuras de plato
+C 0x58E9 La ranura en curso se aparca en E200
+C 0x58EF Con acarreo, el plato estaba tocado
+L 0x58FD ACELERA_UN_POCO      Le quita 0x40 a la velocidad, sin bajar de 0x180: los platos siguientes salen mas rapidos
+C 0x5900 0x40 menos: los platos van mas rapidos
+C 0x5907 0x180 es el suelo de la velocidad
+L 0x5915 REVIENTA_EL_PLATO    Lo apunta, acelera el siguiente, y borra la ranura y su ficha de sprite
+C 0x5918 Con E179 a cero, se marca el desempate en E199
+C 0x5920 El plato siguiente sale mas rapido
+C 0x5923 E160 = 0x0E
+C 0x5928 E172, E173 y E174 a cero
+L 0x5932 BORRA_LA_RANURA      Los ocho bytes de la ranura a cero y su ficha de sprite aparcada
+L 0x5937 BUCLE_DE_BORRADO     Deja la ranura a cero y saca su ficha de la pantalla
+C 0x593A C bytes a cero
+C 0x5945 0xE0 en los cinco bytes: la ficha sale de la pantalla
+L 0x594B LE_HE_DADO          Devuelve con acarreo si el disparo cae dentro del plato: mira la Y y luego la distancia en X
+C 0x594B La primera casilla de la ranura dice la postura
+C 0x594E Con la ranura vacia no hay nada que mirar
+C 0x5954 Ocho de margen arriba y ocho abajo
+C 0x595A Solo las posturas 0 a 3 se pueden reventar
+C 0x5967 Y la distancia en X: si sale con acarreo, el disparo cae dentro
+L 0x5969 MUEVE_LOS_PERDIGONES  A los tres perdigones les resta su paso a la Y y les copia el patron del plato al que van
+C 0x596F Los tres perdigones
+C 0x5974 La Y de 16 bits, menos el paso
+C 0x597B El patron sale de la ranura del plato
+C 0x5980 0x10 bytes: el perdigon siguiente
+C 0x598C Tres perdigones
+L 0x598E COPIA_LAS_FICHAS     Los cuatro bytes de cada perdigon, a la tabla de fichas de 0xE0D4
+C 0x598E Dos bytes de cabecera que no se copian
+C 0x5993 Y sus cuatro bytes de ficha
+L 0x5999 APUNTA_LA_ESCOPETA   Deja el color y el patron de los dos canones, y los apunta al plato mas cercano a cada altura
+C 0x5999 Con la tanda acabada (E170 a cero), otro color
+C 0x59A9 E174 elige el patron: cuatro por postura
+C 0x59B6 El canon de abajo busca alrededor de la Y 0x90...
+C 0x59BE ...y el de arriba, de la 0x60
+L 0x59C7 PLATO_MAS_CERCANO    De los tres platos, el que menos se aleje de la Y de D; si no hay ninguno, 0x90
+C 0x59C7 E arranca en 0xFF: la distancia mas grande posible
+C 0x59CE Con la ranura vacia, se pasa de largo
+C 0x59D7 La distancia, en valor absoluto
+C 0x59DC Y se queda con la menor
+C 0x59E3 0x0C bytes: la ranura siguiente
+C 0x59EE Sin plato en esa ranura, la escopeta no apunta ahi
+C 0x59F5 Sin ningun plato, la escopeta se queda apuntando a 0x90
+L 0x59F8 DISPARA              Con el mando, dispara el canon que toque: el bit 3 el de arriba y los bits 2 y 4 el de abajo
+C 0x59FB Bit 3 del mando: el canon de arriba
+C 0x5A03 Bits 2 y 4: el de abajo
+L 0x5A06 DISPARA_ARRIBA       El canon de arriba, el de 0xE0C4
+L 0x5A0C DISPARA_ABAJO        El de abajo, el de 0xE0C0
+L 0x5A10 UN_DISPARO           Apunta la escopeta, gasta un cartucho y mira si le da a alguno de los tres platos
+C 0x5A14 E1AA a cero: todavia no ha dado
+C 0x5A1F Sin cartuchos (E172 a cero) solo suena el clic
+C 0x5A25 Y con E1AB puesto tampoco se gasta: es el disparo de la demo
+C 0x5A2F E160 es el margen de acierto: cuanto mas alto, mas facil
+C 0x5A37 La ranura en curso se aparca en E200
+C 0x5A3A Con la ranura vacia no hay plato al que dar
+C 0x5A42 Seis de margen en la X...
+C 0x5A4C ...y otros seis en la Y
+C 0x5A56 0x10 bytes: la ranura siguiente
+C 0x5A5D El sonido 0x4E: el disparo
+L 0x5A62 HA_DADO              Apunta el impacto; con E1AB puesto solo cuenta, y si no, revienta el plato y saca el numero
+C 0x5A66 E1AB puesto: es el disparo de la demo, solo se apunta
+L 0x5A6D REVIENTA_Y_PUNTUA    Cobra los puntos, suena, y busca hueco para el numerito que sale flotando
+C 0x5A70 El sonido 0x50: el plato roto
+C 0x5A7B Dos huecos para los numeros que flotan
+L 0x5A7D BUSCA_UN_HUECO       Recorre las ranuras hasta dar con una a cero y monta ahi la ficha que apunte E203
+C 0x5A82 Cuatro bytes de ficha por ranura
+C 0x5A88 0x10 fotogramas de vida
+C 0x5A8A El molde de la ficha
+C 0x5A8E 0x10 mas abajo que el molde
+C 0x5A96 El patron del numero sale de la tabla que empieza en el ret de 0x5AA5
+C 0x5A99 OJO: la tabla se indexa DESDE el ret, asi que su entrada 0 es el propio opcode 0xC9
+D 0x5AA6 0x5AAD patrones_del_numero Los patrones del numerito que sale al romper un plato, uno por postura: 0x14, 0x18, 0x1C, 0x3C, 0x1C, 0x1C, 0x1C. La indexa 0x5A96 desde el RET de 0x5AA5, asi que la entrada 0 es el propio opcode 0xC9 y nunca se usa
+F 0x5AA6 7
+L 0x5AAD COBRA_EL_PLATO       Suma al marcador lo que valga la postura en la que se rompio, y sube la dificultad
+C 0x5AAD La ranura que se aparco en E200
+C 0x5AB0 Su postura, a E202
+C 0x5AB4 La postura 4 con E178 puesto marca E179
+C 0x5AC6 Otra tabla que arranca en un ret: lo que paga cada postura, en BCD
+C 0x5AC9 Indexada por la postura
+C 0x5AD1 El daa: los puntos van en BCD
+C 0x5AD8 Por debajo de la postura 5, la ranura se borra
+C 0x5AE0 Dos cartuchos otra vez
+C 0x5AE4 Uno de cada dos impactos sube el nivel
+C 0x5AEA El nivel tapa en 3
+C 0x5AF2 Y de el sale el margen de acierto: 0x0E, 0x10, 0x12 o 0x14
+C 0x5AFA La velocidad sube 0x20
+C 0x5B02 Con tope en 4
+D 0x5B0B 0x5B12 puntos_por_postura Lo que paga cada postura al romper el plato, en BCD: 01, 05, 10, 30, 10, 00, 00. Con el mismo apano: 0x5AC6 la indexa desde el RET de 0x5B0A
+F 0x5B0B 7
+L 0x5B12 GASTA_LOS_NUMEROS    Los tres numeros que flotan pierden un fotograma de vida y, al acabarse, se aparcan
+C 0x5B1B Con la cuenta en negativo, el numero se apaga
+C 0x5B22 Cuatro bytes por ficha
+C 0x5B27 Las que queden
+L 0x5B2A ARRANCA_LA_BARRA     La primera vez guarda la postura en E148, y luego sube la Y tres puntos por fotograma
+C 0x5B2E E116: solo la primera vez
+C 0x5B36 El nibble bajo de E202: la fuerza del viento
+C 0x5B3E Tres puntos por fotograma
+L 0x5B42 SUBE_EL_ANGULO       Con el boton, el angulo del rotulo ANGLE sube 0,28 grados en BCD y da la vuelta a los 4,00
+C 0x5B4A Bit 4 del mando: el boton
+C 0x5B52 Pasado el 0x10 el contador se reinicia
+C 0x5B5B 0x28 en BCD: el angulo sube de 0,28 en 0,28 grados
+C 0x5B5E El resultado, otra vez a su sitio
+C 0x5B61 Con acarreo, sube la cifra de las centenas
+C 0x5B69 A los 4,00 grados, vuelta a empezar
+C 0x5B72 Y hasta soltar el boton no se admite otro
+L 0x5B7A CENTRA_EL_VIENTO     Del valor de E202 saca el viento, en valor absoluto y centrado en 0x80
+C 0x5B80 El bit 7 dice para que lado sopla
+C 0x5B86 0x80 es el centro: sin viento
+L 0x5B8C CORRIGE_LA_DERIVA    Segun la altura, la deriva se va corrigiendo: cada tramo de la tabla de 0x5BB0 quita un punto
+C 0x5B8F E148, el tramo por el que va
+C 0x5B96 La altura de ese tramo
+C 0x5B9A Mientras no se pase de la altura del tramo, no toca
+C 0x5BA2 Y la deriva, que se corrige un punto
+C 0x5BA9 El signo de E202 dice hacia donde se corrige
+D 0x5BB0 0x5BB8 ocho_de_5B8C Ocho bytes que 0x5B8C indexa con (0xE148)
+F 0x5BB0 8
+L 0x5BB8 SIGUIENTE_VIENTO     Avanza el contador de E203 en redondo y saca de la tabla el viento nuevo
+C 0x5BC0 Dieciseis valores en redondo
+D 0x5BCB 0x5BDB dieciseis_vientos Dieciseis valores de viento que 0x5BB8 recorre con el contador de 0xE203, que da la vuelta con un and 0x0F: el bit 7 es el lado y el nibble bajo la fuerza
+F 0x5BCB 16
+L 0x5BDB ANDA_DE_UN_LADO_A_OTRO  Un fotograma si y otro no: anda hacia un lado o hacia el otro, y al llegar al final remata
+C 0x5BDE Uno de cada dos fotogramas
+C 0x5BE7 E143 dice hacia donde anda
+C 0x5BF7 Pasado el 0x29 por la izquierda se para
+L 0x5BFE ANDA_A_LA_DERECHA    La X sube, y con la marca de E117 tambien la del cuerpo
+C 0x5C08 Y el tope por la derecha es 0xAF
+L 0x5C0B ANDA_A_LA_IZQUIERDA  El otro sentido
+L 0x5C11 REMATA_EL_PASO       Coloca las seis fichas, elige el motor que toca y deja ocho fotogramas de espera
+C 0x5C17 E111 a cero: es la primera vez
+C 0x5C25 E145 elige entre los dos remates
+C 0x5C3B La lista de 0x6635
+C 0x5C4F Once bytes de E112 a cero
+C 0x5C5D E143 se invierte: la vuelta siguiente anda al reves
+C 0x5C61 Ocho fotogramas
+C 0x5C64 El sonido 0x8C
+L 0x5C6B SIGUE                Sale con el bit 0 puesto
+L 0x5C6E MIRA_SI_DA_EN_LA_DIANA  Si cae dentro de los 0x27 puntos de la diana, acierta: suena y coloca los dos sprites
+C 0x5C73 0x27 de ancho tiene la diana
+C 0x5C7A Por fuera, no la toca
+C 0x5C7F E117 y E119 a uno: ha acertado
+C 0x5C85 El sonido 0x08
+C 0x5C93 La X del sprite, relativa a donde esta la diana
+L 0x5C9F ALTURA_DE_LA_FLECHA  Su Y sale de 0x67 menos dos tramos: cuatro puntos por cada paso de E114 y otros pocos por E113
+C 0x5CA4 El 0x10 cuenta como diez
+L 0x5CAA CUATRO_POR_PASO      Cuatro puntos por cada paso que lleve
+C 0x5CAA Sin pasos que quedar, se sale
+C 0x5CAE Cuatro puntos por paso
+C 0x5CB4 Tres tramos como mucho
+C 0x5CB9 Tres tramos por la altura de E113: 0x77, 0x50 y 0x25
+C 0x5CC8 0x67 es la Y del suelo
+C 0x5CCC Y cuatro puntos mas de la ficha
+B 0x5CCF ----------------------------------------------------------------------
+B 0x5CCF EL ACIERTO DEL ARCO, SIN RAIZ CUADRADA. La distancia al centro de la
+B 0x5CCF diana se calcula con Pitagoras, pero el cartucho no saca la raiz:
+B 0x5CCF eleva al cuadrado las dos diferencias -0x5D0C, con ocho sumas-, las
+B 0x5CCF suma, y compara ese cuadrado contra la tabla de 0x5D03, que son los
+B 0x5CCF radios de los anillos YA ELEVADOS AL CUADRADO. El anillo que sale
+B 0x5CCF indexa los puntos de 0x5D37.
+B 0x5CCF ----------------------------------------------------------------------
+L 0x5CCF QUE_ANILLO_HA_TOCADO  Suma los cuadrados de las dos distancias al centro y busca en que anillo cae
+C 0x5CD5 El centro de la diana en X, 0xBC
+C 0x5CE1 Y en Y, 0x53
+C 0x5CE7 Los dos cuadrados, sumados: la distancia al centro, al cuadrado
+C 0x5CEA La tabla de radios al cuadrado, nueve anillos
+L 0x5CED BUSCA_EL_ANILLO      Compara con cada radio hasta pasarse
+C 0x5CED El byte alto del radio: cero en los ocho primeros
+C 0x5CF0 Y uno en el noveno, el 0x121, que no cabe en un byte
+C 0x5CF2 Compara el cuadrado de la distancia contra el radio, primero el byte alto
+C 0x5CF8 Y luego el bajo
+C 0x5CFF E11C: el anillo, del 0 -el aro de fuera- al 9 -el centro-
+D 0x5D03 0x5D0C radios_al_cuadrado Los nueve anillos de la diana, con su radio YA ELEVADO AL CUADRADO: 1, 6, 16, 25, 64, 96, 144, 196 y 289. El ultimo no cabe en un byte, y por eso 0x5CED le pone el 1 de arriba a mano
+F 0x5D03 9
+F 0x5D03 9
+L 0x5D0C CUADRADO_DE_LA_DIFERENCIA  A menos B en valor absoluto, elevado al cuadrado con ocho sumas y desplazamientos
+C 0x5D0D Valor absoluto: da igual de que lado del centro caiga
+C 0x5D10 El valor absoluto de la diferencia
+C 0x5D13 El mismo numero en DE y en H: se multiplica por si mismo
+C 0x5D17 Ocho bits
+L 0x5D19 MULTIPLICA_OCHO_BITS  Ocho vueltas de desplazar y sumar: el clasico
+C 0x5D19 Desplaza...
+C 0x5D1C ...y suma cuando sale acarreo
+L 0x5D20 COBRA_EL_TIRO        Busca el anillo y deja en E11D los dos bytes en BCD que paga, sacados de la tabla de 0x5D37
+C 0x5D23 E11D, donde se deja lo que paga
+C 0x5D26 La tabla de diez palabras
+C 0x5D29 E11C, el anillo que ha tocado
+C 0x5D2C Por dos: son palabras
+D 0x5D37 0x5D4B puntos_por_anillo Lo que paga cada anillo, en BCD: 10, 100, 170, 210, 250, 290, 320, 350, 400 y 600. Del centro hacia fuera, al reves: el 0x0010 es el aro de fuera
+F 0x5D37 w1
+L 0x5D4B SUMA_LO_QUE_VALE     Suma a los puntos del intento los dos bytes en BCD del anillo
+C 0x5D51 Dos bytes en BCD
+C 0x5D53 Y sin acarreo de entrada
+C 0x5D57 Y de vuelta a su sitio
+C 0x5D5C El tercer byte solo recoge el acarreo
+L 0x5D61 PINTA_EL_ANGULO      Las tres cifras del angulo, en el rotulo ANGLE de la fila 10: los dos decimales de E113 y la unidad de E114
+C 0x5D64 Fila 10, columna 16
+C 0x5D71 Y la de al lado, tres casillas antes
+L 0x5D79 PINTA_EL_VIENTO      La cifra del viento y, al lado, la flecha que dice hacia que lado sopla: el rotulo WIND
+C 0x5D82 0x10 es el tile del cero
+C 0x5D89 El bit 7 elige entre los tiles 0x57 y 0x58: la flecha a un lado o al otro
+L 0x5D92 PINTA_LOS_PUNTOS_DEL_TIRO  Los puntos del ultimo tiro, que parpadean mientras E119 este puesto
+C 0x5D9E Bit 4 del contador: se apagan la mitad del tiempo
+C 0x5DA2 Cuatro casillas a cero: la marca se borra
+C 0x5DA8 Y si no, las dos cifras de E11E
+L 0x5DB0 PARPADEA_AL_ACERTAR  Cambia el color cada ocho fotogramas mientras E119 este puesto
+C 0x5DB2 E0C3, el color de la primera ficha
+C 0x5DB5 E119: solo mientras este puesto
+C 0x5DBE Bit 3: ocho fotogramas con cada color
+L 0x5DC5 PINTA_LA_BARRA_DE_FUERZA  La barra de la fila 12: los tramos llenos, medio tramo si sobra, y el resto vacio
+C 0x5DC5 Fila 12, columna 5
+C 0x5DCC E111 entre dos: cada tramo son dos unidades
+C 0x5DD4 El tile 0x4C es el tramo lleno
+C 0x5DDC Y el 0x79 el medio tramo, cuando la cuenta era impar
+L 0x5DE8 AVANZA_Y_REMATA      Un fotograma si y otro no: alterna los dos patrones, corre la X a la derecha y, al llegar al tope, coloca las seis fichas
+C 0x5DEB Uno de cada dos
+C 0x5DEE Los dos patrones alternos
+C 0x5DF7 Y un punto a la derecha
+C 0x5DFD Al llegar, las seis fichas otra vez
+L 0x5E0F MIRA_SI_ACIERTA      Si E204 cae en los ocho puntos por encima de (0xE0C4), pone el patron 0x7C, marca E117 y suena
+C 0x5E12 Ocho de margen a cada lado
+C 0x5E15 Ocho mas: el otro extremo
+C 0x5E18 E204, el viento centrado
+C 0x5E1C Fuera de los ocho puntos, no vale
+C 0x5E20 E11D y E11E a cero
+C 0x5E25 El patron 0x7C y el color 0x30
+C 0x5E30 El sonido 0x96
+L 0x5E35 ALTERNA_DOS_PATRONES  Los patrones de 0xE0CA y 0xE0D2 cambian cada ocho fotogramas entre 0x68/0x70 y 0x74/0x78
+C 0x5E3C Bit 3: ocho y ocho
+C 0x5E44 Los patrones van a las fichas de E0CA y E0D2
+L 0x5E4D COLOCA_LAS_SEIS_FICHAS  Las seis fichas de sprite de 0x5E59, tal cual
+C 0x5E4D El molde de las seis fichas
+C 0x5E53 0x18 bytes: seis fichas
+D 0x5E59 0x5E71 veinticuatro_a_e0c4 Los 0x18 bytes que 0x5E4D copia con un ldir a 0xE0C4: seis fichas de sprite
+F 0x5E59 4
+L 0x5E71 ARRANCA_LA_CEREMONIA  Las dos poses de la figura (0x5E8B y 0x5EA3) y la segunda copiada ya a la zona de trabajo
+C 0x5E87 E236 = 0x7F
+D 0x5E8B 0x5EA3 tabla_5E8B Veinticuatro bytes que 0x5E71 pasa como primero de los dos punteros de 0x54C7
+F 0x5E8B 4
+D 0x5EA3 0x5EBB tabla_a_e222 Los veinticuatro bytes que 0x5E7A copia con un ldir a 0xE222, y que 0x5E74 pasa como segundo puntero
+F 0x5EA3 4
+L 0x5EBB SIGUE_LA_CEREMONIA   Otro paso de la figura
+L 0x5EBE PARPADEA_LA_FIGURA   Cambia el patron cada 32 fotogramas y sube las fichas
+C 0x5EC4 Bit 5: 32 y 32
+L 0x5ECD SUBE_LAS_SEIS_FICHAS  Los 0x18 bytes de E222 a la tabla de sprites, y el corte detras
+C 0x5EDB 0xD0 en la Y de la septima: el VDP para ahi
+L 0x5EE3 CUENTA_ATRAS_DEL_DISPARO  Baja el contador de recarga y, con el mando, deja apuntado que canon dispara
+C 0x5EE3 E150, el contador de recarga
+C 0x5EEB Y al llegar a cero, el de al lado tambien
+C 0x5EF0 Con la tanda acabada no se dispara
+C 0x5EF8 Los bits 2, 3 y 4 del mando
+C 0x5EFD Bit 3: el canon de arriba
+C 0x5F01 Bits 2 y 4: el de abajo
+C 0x5F08 Ocho fotogramas de recarga
+L 0x5F0B PINTA_LA_ESCOPETA    Sube el dibujo que toque -cuatro tiles por fila, cinco filas- y coloca su sprite
+C 0x5F0E Cuatro dibujos, del 0 al 3
+C 0x5F1F Fila 19, columna 14
+C 0x5F22 Cinco filas
+C 0x5F25 Cuatro tiles por fila
+C 0x5F2A Y la fila de abajo, 32 casillas mas alla
+C 0x5F30 Cinco filas
+C 0x5F3D Por cuatro y mas 0x20: la X del humo
+C 0x5F44 El sprite del humo: patron 0xA3, color 0x7D
+D 0x5F4E 0x5F56 tabla_de_las_escopetas Cuatro punteros a los cuatro dibujos de la escopeta, que 0x5F16 indexa por dos con (0xE151) topando en 3: 0x5F90, 0x5F56, 0x5F73 y 0x5FAD
+F 0x5F4E w1
+F 0x5F4E w1
+D 0x5F56 0x5F73 escopeta_1 El dibujo de una postura: cinco filas de cuatro tiles, que 0x5F24 sube de cuatro en cuatro a la VRAM 0x3A6E
+F 0x5F56 4
+D 0x5F73 0x5F90 escopeta_2 Otra postura, con el mismo reparto
+F 0x5F73 4
+D 0x5F90 0x5FAD escopeta_0 La de reposo, que es la entrada 0 de la tabla
+F 0x5F90 4
+D 0x5FAD 0x5FC5 escopeta_3 La ultima, la del disparo
+F 0x5FAD 4
+L 0x5FC5 COLOCA_LA_BARRA      Con E105 en 0x12 o mas, saca las fichas de la tabla de 0x7CDA; si no, las calcula corriendo la Y
+C 0x5FC8 Por debajo de 0x12 no hay tabla: se calculan
+C 0x5FCD La tabla de fichas, indexada por dos
+C 0x5FD3 El puntero de la pose
+C 0x5FD7 El primer byte es la cuenta
+C 0x5FDB Y las fichas van a 0xE0C0
+C 0x5FE1 En el 0x1D las fichas van a 0xE0C8 en vez de a 0xE0C0
+L 0x5FE9 CIERRA_LAS_FICHAS    0xD0 en la Y de la siguiente, y con E133 puesto anade las cinco de 0x6021
+C 0x5FF4 Cinco bytes mas de ficha
+L 0x5FFA CALCULA_LAS_FICHAS   Diez fichas, cada una con la Y corrida por lo que falte para 0x12
+C 0x5FFD En negativo: lo que le falta a la barra para llegar
+C 0x6000 Diez fichas
+C 0x6005 La Y, corrida por lo que falte
+C 0x600A Y los otros tres bytes de la ficha, tal cual
+C 0x600B El patron y el color, tal cual
+C 0x6017 De la quinta en adelante, la correccion se apaga
+D 0x6021 0x6244 rle_6021 Flujo comprimido con su direccion de VRAM delante: 682 bytes de VRAM
+D 0x6244 0x6318 rle_6244 Flujo comprimido con su direccion de VRAM delante: 656 bytes de VRAM
+D 0x6318 0x64C5 flujo_6318 Flujo comprimido con su direccion de VRAM delante: 1027 bytes de VRAM
+D 0x64C5 0x65D1 flujo_64C5 Flujo comprimido con su direccion de VRAM delante: 509 bytes de VRAM
+L 0x65D1 CUENTA_ATRAS_DEL_TIRO  Baja E144 y, justo al llegar a uno, si el anillo era el 9, baja la dificultad y suena
+C 0x65DE El anillo 9 es el aro de fuera: el peor
+C 0x65E4 Con E111 por debajo de tres, se baja E145
+C 0x65EC El sonido 0x96
+C 0x65F1 Y la lista de 0x65F7
+D 0x65F7 0x6612 lista_65F7 Lista de 18 tiles con su direccion de VRAM delante, para PINTA_LISTA (0x4050)
+L 0x6612 PINTA_EL_ROTULO_DEL_TIRO  El flujo de 0x6618, que borra el rotulo de las tres filas
+D 0x6618 0x6627 rle_6618 Flujo comprimido con su direccion de VRAM delante: 18 bytes de VRAM
+D 0x6627 0x6635 lista_6627 Dos veces 0300. Descifrada con tools/textos.py (el numero de tile no es el ASCII): «0300 / 0300»
+D 0x6635 0x6643 lista_6635 Lista de 8 tiles con su direccion de VRAM delante, para PINTA_LISTA (0x4050)
+D 0x6643 0x6651 lista_6643 Lista de 8 tiles con su direccion de VRAM delante, para PINTA_LISTA (0x4050)
+D 0x6651 0x694C rle_6651 Flujo comprimido con su direccion de VRAM delante: 909 bytes de VRAM
+D 0x694C 0x6C0A rle_694C Flujo comprimido con su direccion de VRAM delante: 1435 bytes de VRAM
+L 0x6C0A CARGA_LOS_TRES_FLUJOS  Los tres flujos de graficos de la prueba, sacados de la tabla de 0x6C3A
+C 0x6C0D Los dos bits bajos de E080: la prueba
+C 0x6C0F Por seis: tres punteros por prueba
+C 0x6C10 Por seis: tres punteros por prueba
+C 0x6C19 El primer puntero
+C 0x6C1E El primero, a la VRAM 0x2A00
+C 0x6C2A El segundo, a la 0x0A00
+D 0x6C3A 0x6C52 tabla_de_las_pruebas Cuatro registros de tres punteros, uno por prueba: los tres flujos de graficos que 0x6C13 descomprime en la VRAM 0x2A00, 0x0A00 y la tercera. El indice son los dos bits bajos de (0xE080) por seis
+F 0x6C3A w3
+D 0x6C52 0x6D2B flujo_6C52 Flujo comprimido con su direccion de VRAM delante: 480 bytes de VRAM
+D 0x6D2B 0x6E24 flujo_6D2B Flujo comprimido con su direccion de VRAM delante: 508 bytes de VRAM
+L 0x6E24 PINTA_LA_BARRA_DE_POTENCIA  La barra POWER de la fila 23: los tramos llenos con el tile 0x72 y el resto con el 0x5A
+C 0x6E29 Cuatro rra: el nibble alto de la potencia
+C 0x6E2F Fila 23, columna 8
+C 0x6E32 Lo que falta hasta 0x0F: lo que queda vacio
+C 0x6E34 Lo que falta hasta 0x0F: los tramos vacios
+C 0x6E37 Una casilla cada vez: la barra va en horizontal
+C 0x6E3A El tile 0x72, el tramo lleno
+C 0x6E40 Y el 0x5A, el vacio
+L 0x6E45 SUBE_LA_POTENCIA     La tabla de 0x6E77 le resta y el mando le suma; el resultado se guarda en E100
+C 0x6E49 El byte alto de E100 es la potencia
+C 0x6E50 La tabla de trece, indexada por el nibble alto de E101
+C 0x6E59 Por cuatro
+C 0x6E5E Si se pasa por abajo, se queda en cero
+C 0x6E68 Bit 3 del mando: el jugador empuja
+C 0x6E71 Y por arriba, tope en 0xFF
+D 0x6E77 0x6E87 lo_que_baja_la_potencia Trece valores que 0x6E50 indexa con el nibble alto de E101: lo que la potencia pierde por fotograma, de 0x04 a 0xD8
+L 0x6E87 MUEVE_LA_BARRA       Coloca la barra en su altura, la mueve un punto arriba o abajo y suena al llegar
+C 0x6E87 E110, la categoria elegida: 0x10 de altura por categoria
+C 0x6E92 La tabla de alturas de la barra
+C 0x6E9F Y el sprite de al lado, 0x20 mas abajo
+C 0x6EA7 E vale +1 o -1: hacia donde se mueve
+C 0x6EB4 Por debajo de 0x17 el paso es 2, y por encima 0x20
+C 0x6EBC El paso nuevo
+C 0x6EC1 Por debajo de cero no baja
+C 0x6EC3 Ni se pasa del tope de arriba
+C 0x6ECC E035 a cero
+C 0x6ECF El sonido 0x86: la barra en su sitio
+D 0x6ED4 0x6EF8 alturas_de_la_barra Las 36 alturas por las que pasa la barra, indexadas con (0xE105): de 0x18 a 0x50 de dos en dos, y luego a saltos hasta 0xD0
+F 0x6ED4 6
+L 0x6EF8 PARPADEA_LA_BARRA    En el paso 0x16 la barra parpadea, y con el boton se levanta
+C 0x6EFB Solo en el 0x16
+C 0x6F04 Bit 4: el boton levanta
+C 0x6F0C El levantamiento arranca en el 0x17, y el 0x1D es la barra quieta
+C 0x6F0F El paso 0x1D: la barra quieta
+L 0x6F13 COLOR_QUE_PARPADEA   El bit 2 del contador elige entre el color 1 y el 0x0F
+C 0x6F16 Bit 2: cuatro fotogramas con cada color
+C 0x6F1E El color va a las dos fichas, E0C3 y E0D3
+L 0x6F25 PINTA_LOS_KILOS      Los kilos de la categoria, sacados de la tabla de 0x6F48, en el cartel KG de la fila 19
+C 0x6F29 La tabla, indexada por dos con la categoria
+C 0x6F36 Fila 19, columna 24
+C 0x6F3D C a 0xFF: los ceros tambien se pintan
+D 0x6F48 0x6F58 kilos_de_cada_categoria Ocho pesos en BCD, uno por categoria: 150, 165, 180, 195, 210, 225, 240 y 260 kilos. La cifra de las centenas la pinta 0x6F36 en el cartel KG
+F 0x6F48 4
+L 0x6F58 PINTA_LAS_LUCES_DEL_JURADO  Las tres luces de la columna 2, bajo el rotulo JUDGE: encendidas con el tile 0x8F las que diga E123, y apagadas las demas
+C 0x6F5C Lo que le falta a E123 para tres: las luces apagadas
+C 0x6F63 Fila 17, columna 2: la de mas abajo
+C 0x6F6A Y el tile 0 para las de arriba
+L 0x6F6B PINTA_HACIA_ARRIBA   B casillas con el tile de A, subiendo de fila en fila
+C 0x6F6B Una fila menos son 32 casillas menos
+L 0x6F6E PINTA_B_CASILLAS     B casillas con el tile de A; con B a cero no pinta nada
+C 0x6F6E Con B a cero no se pinta nada
+L 0x6F78 CUENTA_LAS_LUCES_DEL_JURADO  Con la barra en el paso 0x1C, cada 0x20 fotogramas se enciende una luz; a la tercera, el levantamiento es valido
+C 0x6F7B Solo en el paso 0x1C
+C 0x6F82 0x20 fotogramas entre luz y luz
+C 0x6F8A El sonido 0x92
+C 0x6F93 E071 y E1A3 a uno: levantamiento valido
+L 0x6F9C SIN_LUCES            Fuera del paso 0x1C, la cuenta vuelve a 0x20 y las luces se apagan
+L 0x6FA2 CAE_LA_BARRA         Tres fases en E138: arranca el sonido, deja caer los dos discos y espera a que el canal calle. Devuelve Z cuando ha terminado
+C 0x6FA6 Por debajo del 0x17 la barra ni llego a subir: se acaba en el sitio
+L 0x6FAF SUENA_Y_ESPERA       El sonido 0xAE y sale con 0xFF: aun no ha terminado
+C 0x6FB3 El paso 0x1D es la barra quieta
+C 0x6FBA Fase 1: la caida
+C 0x6FBE E137 baja dos puntos por fotograma
+C 0x6FC0 Hasta 0x3C, que son treinta fotogramas
+C 0x6FC6 Al llegar, el sonido 0x94 y la fase 2
+L 0x6FCE CAEN_LOS_DOS_DISCOS  Las dos primeras fichas de sprite, patrones 0 y 4 -los dos discos de la barra-, bajando desde la Y 0x4A y corriendose hasta ocho puntos a la derecha
+C 0x6FD0 La mitad de lo caido, con tope en ocho: lo que se corre a la derecha
+C 0x6FD7 0x58 es la X de partida
+C 0x6FDA Y 0x4A la Y
+C 0x6FE0 Dos fichas
+C 0x6FEA La segunda lleva el patron 4
+C 0x6FED El color 1, negro
+C 0x6FF0 Una ficha al lado de la otra
+C 0x6FF6 Sale con NZ: la caida sigue
+L 0x6FF8 ESPERA_A_QUE_CALLE   Fase 2: hasta que el canal de E036 calle no se da por terminado
+C 0x6FF8 La fase 2 si el contador estaba en 2
+C 0x6FFB El canal de E036: mientras suene, no se acaba
+L 0x7000 ARRANCA_LA_CAIDA     Fase 0: pasa a la 1 y suena
+C 0x7000 A la fase siguiente
+D 0x7003 0x7148 rle_7003 Flujo comprimido con su direccion de VRAM delante: 576 bytes de VRAM
+D 0x7148 0x7241 rle_7148 Flujo comprimido con su direccion de VRAM delante: 676 bytes de VRAM
+D 0x7241 0x7251 dieciseis_a_la_vram Los dieciseis bytes que 0x50B3 copia a la VRAM cuando (0xE1A3) no es cero; con (0xE1A3) a cero se copian los de 0x7230
+F 0x7241 8
+D 0x7251 0x756D flujo_7251 Flujo comprimido: 1568 bytes de VRAM
+L 0x756D PINTA_LA_CATEGORIA   El nombre de la categoria, catorce tiles de la tabla de 0x7587, en el cartel CHOOSE CLASS de la fila 20; y detras, sus kilos
+C 0x756D E110, la categoria elegida
+C 0x7571 Por catorce: doblado tres veces, menos una y otra vez doblado
+C 0x757C Fila 20, columna 6
+C 0x757F Catorce tiles
+D 0x7587 0x75F7 nombres_de_las_categorias Los ocho nombres de categoria, de catorce tiles cada uno: FLY, BANTAM, FEATHER, LIGHT y MIDDLE WEIGHT, MIDDLE HEAVY, HEAVY WEIGHT y SUPER HEAVY
+F 0x7587 14
+L 0x75F7 ELIGE_LA_CATEGORIA   Con el boton se acepta la categoria; con cualquier direccion se pasa a la siguiente, y al dar la vuelta se arranca en la de E075
+C 0x75FA Bit 4 del mando: aceptada
+C 0x75FF Los cuatro bits bajos: cualquier direccion
+C 0x7602 El sonido 0x09
+C 0x7610 Ocho categorias en redondo
+C 0x7616 La escribe dos veces: HL ya apuntaba a E110
+L 0x761A COPIA_LOS_NUEVE_BYTES  Los nueve bytes de 0x7626 a 0xE100
+D 0x7626 0x762F nueve_de_761D Los nueve bytes que 0x761D copia con un ldir
+F 0x7626 9
+L 0x762F REARRANCA_LAS_TIRAS  Con E179 puesto, deja las dos tiras de nueve bytes y el paso en 5
+C 0x762F Sin E179, no se toca nada
+C 0x7637 Dos vueltas
+L 0x7639 COPIA_LOS_NUEVE_DEL_REVES  Los nueve bytes de 0x764C a 0xE110 y otra vez a 0xE100, copiados hacia atras con un lddr
+C 0x763F Del reves: el lddr acaba en el primer byte
+C 0x7641 Y la segunda vuelta, a 0xE100
+D 0x764C 0x7655 nueve_de_7639 Los nueve bytes que 0x7639 copia del reves a 0xE110 y a 0xE100: los mismos que los de 0x7626 salvo el primero y el ultimo
+F 0x764C 9
+C 0x7656 La altura de antes, mas uno
+C 0x765B Si coinciden, la orden de repetir se salta
+C 0x765E Por debajo, se deja como estaba
+C 0x7663 La altura nueva
+C 0x766C Y se guarda en el canal
+B 0x7670 ----------------------------------------------------------------------
+B 0x7670 EL REPRODUCTOR. Tres canales de doce bytes desde 0xE010: el contador
+B 0x7670 de la nota, lo que dura, el estado (que es el numero del efecto que
+B 0x7670 suena, con el bit 7 para las ordenes largas y el bit 6 para el
+B 0x7670 ruido), el puntero al flujo, la octava, el volumen de fondo, el
+B 0x7670 volumen que suena, la cuenta del apagado, la altura y el desafine.
+B 0x7670 Cada fotograma 0x7696 da un paso a los tres y deja en 0xE036 el o de
+B 0x7670 los tres estados: esa es la bandera de "algo esta sonando" que mira
+B 0x7670 medio cartucho.
+B 0x7670 ----------------------------------------------------------------------
+L 0x7670 ABRE_O_CIERRA_EL_CANAL  Toca el bit del canal en el registro 7 del PSG: con D a cero lo abre y con D a uno lo cierra
+C 0x7670 E034 lleva copia del registro 7
+C 0x7674 El canal viene en C como 1, 3 o 5
+C 0x767A Tres desplazamientos: el bit del canal
+C 0x7685 El bit 1 se pone siempre, y si estaba el 4 se quita
+L 0x768D ESCRIBE_LA_MEZCLA    Guarda el registro 7 en E034 y lo manda al PSG
+C 0x7691 El registro 7 del PSG es el de la mezcla
+L 0x7696 CORRE_EL_SONIDO      Un paso de los tres canales y, detras, E036 con el o de los tres estados
+C 0x7699 Doce bytes de un canal al siguiente
+C 0x76A4 E036: la bandera de que algo suena
+L 0x76A8 LOS_TRES_CANALES     IX en 0xE010, C con el canal y tres vueltas de doce bytes
+C 0x76AE C es el canal: 1, 3 y 5
+C 0x76B5 Tres canales
+L 0x76BA VUELTA_DE_UN_CANAL   Con el estado a cero, ese canal esta callado
+C 0x76C2 C sube de dos en dos: el canal siguiente
+L 0x76CA PASO_DEL_CANAL       Abre el canal si no es de ruido y, con el bit 7 del estado, mantiene la nota en vez de leer otra
+C 0x76CA El bit 6 dice que ese canal es el del ruido
+C 0x76D5 Con el bit 7 la nota se mantiene
+C 0x76D8 Y mientras el contador no llegue a cero, tampoco se lee nada
+L 0x76DC SIGUIENTE_ORDEN      Lee la orden que toca del flujo: 0xFE la repeticion, 0xFF y mas el final, y por debajo la nota
+C 0x76E3 0xFE: la orden de repetir
+C 0x76E8 De 0xFF en adelante, se acaba
+C 0x76EA Con el bit 7 del estado, las ordenes son las de 0x778D
+C 0x76F3 0x2N: N es lo que dura la nota
+C 0x7701 0x1N: el registro 6 del PSG, el periodo del ruido
+C 0x7710 Y el ruido abre su canal
+L 0x7715 NOTA_O_RUIDO         El canal de ruido se salta la altura; los demas la parten en nibble alto y bajo
+C 0x7719 Sin el bit 6, la nota de siempre
+C 0x771C Solo el tercer canal
+L 0x7726 PARTE_LA_NOTA        El nibble alto es el volumen y el bajo la nota; el byte de detras, la octava
+C 0x7729 Un xor deja el nibble bajo: la nota
+C 0x772D Se apunta el flujo detras
+L 0x7739 GUARDA_LA_DURACION   Deja lo que dura la nota en el contador, y tres mas en la cuenta del apagado
+C 0x7739 Lo que dura la nota
+C 0x7740 Tres mas: la cuenta del apagado
+L 0x7747 CALLA_EL_CANAL       Cierra el canal, borra el estado y baja el volumen a cero
+C 0x7748 La altura y el desafine a cero
+C 0x774E D a uno: el canal se cierra
+C 0x7754 Y el estado a cero: el canal queda libre
+L 0x775A MANTIENE_LA_NOTA     Baja el contador y, con el, la cuenta del apagado: el volumen va cayendo de uno en uno
+C 0x775D Al llegar a cero, a por la orden siguiente
+C 0x7766 Mientras las dos cuentas no coincidan, no se apaga
+C 0x7773 El volumen baja de uno en uno hasta cero
+L 0x777C ESCRIBE_EL_VOLUMEN   Los registros 8, 9 y 10 del PSG, uno por canal
+C 0x777F El efecto 0x94 suena dos puntos mas fuerte
+C 0x7787 C partido por dos y mas 8: los registros 8, 9 y 10
+L 0x778D ORDENES_LARGAS       Las ordenes del bit 7: 0xDN el desafine, 0xFN el volumen de fondo, 0xEN la octava o el vibrato
+C 0x7790 0xDN: lo que se le suma a la altura
+C 0x779C 0xFN: el volumen de fondo
+C 0x77A7 0xEN: la octava, y con el bit 3 el desafine
+C 0x77AB El nibble bajo de la orden
+C 0x77AD Con el bit 3, lo que llega es el desafine
+C 0x77B7 Y si no, la octava
+L 0x77BC ALTURA_DE_LA_NOTA    La nota por el desafine, sumandolo tantas veces como diga el nibble bajo
+C 0x77BF El desafine del canal
+C 0x77C4 Sumado tantas veces como diga el nibble
+L 0x77C9 ELIGE_EL_VOLUMEN     Guarda la nota, avanza el flujo y saca el volumen: con 0xC0 el de fondo o el del contador
+C 0x77D0 0xC0: la nota sin volumen propio
+C 0x77D7 El efecto 0x86 sube su propio contador de 0xE035
+C 0x77DB E035, el contador del efecto 0x86
+C 0x77E1 Topado en 0x0F
+C 0x77E9 Y ese es el numero de la nota
+C 0x77EC Sin volumen propio: se coge el de fondo
+C 0x77F0 El nibble alto es el volumen, y el 0x0C deja el de fondo
+L 0x77FE PERIODO_DE_LA_NOTA   Del indice sale el periodo de 0x7832, se baja tantas octavas como diga la octava y se escribe en el PSG
+C 0x7805 La tabla de las doce notas
+C 0x780E La octava del canal
+L 0x7815 BAJA_UNA_OCTAVA      Doblar el periodo es bajar una octava
+C 0x7818 Y el desafine suma uno al periodo
+L 0x781F ESCRIBE_EL_PERIODO   Los dos registros del canal: primero el alto y luego el bajo
+L 0x782A APUNTA_EL_FLUJO      Guarda en el canal por donde va leyendo
+B 0x77FE ----------------------------------------------------------------------
+B 0x77FE LAS DOCE NOTAS. La tabla de 0x7832 son los periodos del PSG de UNA
+B 0x77FE octava entera: 0x6A, 0x64, 0x5F, 0x59, 0x54, 0x50, 0x4B, 0x47, 0x43,
+B 0x77FE 0x3F, 0x3C y 0x38. Con el reloj del PSG -111.861 Hz partido por el
+B 0x77FE periodo- el 0x6A da 1.055 Hz y el 0x38 da 1.998, que son el do y el
+B 0x77FE si de la misma octava; y las once razones de en medio caen en el
+B 0x77FE semitono. Las demas octavas no se guardan: se sacan doblando el
+B 0x77FE periodo en 0x7815, que es exactamente bajar una octava.
+B 0x77FE ----------------------------------------------------------------------
+D 0x7832 0x783E las_doce_notas Los periodos del PSG de las doce notas de una octava, de do a si; las otras octavas salen doblando en 0x7815
+F 0x7832 12
+F 0x7832 12
+L 0x783E SUENA_SI_SE_PUEDE    Solo con el bit 6 de E002 puesto; si no, no suena nada
+L 0x7844 ARRANCA_EL_EFECTO    Reparte el efecto de A por los canales que le toquen, con las interrupciones cerradas
+C 0x7844 Con las interrupciones cerradas
+C 0x7849 El efecto 1 arranca ademas el 0x43 y el 0x42
+C 0x7850 El efecto 1 arrastra el 0x43 y el 0x42
+C 0x785A Se recupera todo y se vuelve a abrir
+L 0x7860 REPARTE_EL_EFECTO    Segun el numero, el efecto ocupa uno, dos o tres canales, y no pisa a otro de mas peso
+C 0x7861 Dos canales por defecto
+C 0x7868 Por debajo del 0x0A va a un solo canal
+C 0x786C Del 0x16 en adelante, a los tres
+C 0x7873 Un canal: el 0, el 1 o el 2 segun el numero
+L 0x7884 SOLO_SI_PESA_MAS     Los seis bits bajos son el peso: si el que suena pesa mas, el nuevo no entra
+C 0x7885 Los seis bits bajos del que ya suena
+C 0x788B Si ese pesa mas, el nuevo no entra
+L 0x788D MONTA_EL_EFECTO      Deja en cada canal el contador a uno, el numero del efecto y el puntero de la tabla de 0x78AC
+C 0x788E La tabla arranca en 0x78AA: el efecto 1 es la primera palabra de 0x78AC
+C 0x7894 Dos atras: el primer byte del canal
+L 0x7896 MONTA_UN_CANAL       Los cinco bytes de arranque de un canal
+C 0x7896 El contador y la duracion a uno: la primera nota entra ya
+C 0x789C El numero del efecto se queda de estado
+C 0x789E Y detras, el puntero del flujo
+C 0x78A4 Ocho mas: el primer byte del canal siguiente
+D 0x78AC 0x790C tabla_de_efectos Los 48 punteros a los efectos y melodias cortas del reproductor, cada uno a su tira de eventos. La tabla cierra clavada contra su destino mas bajo, 0x790C
+F 0x78AC w1
+D 0x790C 0x792F tira_00 Tira de eventos de 35 bytes: la entrada 0 de la tabla de 0x78AC
+D 0x792F 0x793B tira_01 Tira de eventos de 12 bytes: la entrada 2 de la tabla de 0x78AC
+D 0x793B 0x7940 tira_02 Tira de eventos de 5 bytes: la entrada 1 de la tabla de 0x78AC
+D 0x7940 0x794A tira_03 Tira de eventos de 10 bytes: la entrada 3 de la tabla de 0x78AC
+D 0x794A 0x795B tira_04 Tira de eventos de 17 bytes: la entrada 4 de la tabla de 0x78AC
+D 0x795B 0x795C tira_05 Tira de eventos de 1 bytes: la entrada 45, 46, 47 de la tabla de 0x78AC
+D 0x795C 0x7985 tira_06 Tira de eventos de 41 bytes: la entrada 6 de la tabla de 0x78AC
+D 0x7985 0x798C tira_07 Tira de eventos de 7 bytes: la entrada 5 de la tabla de 0x78AC
+D 0x798C 0x79A0 tira_08 Tira de eventos de 20 bytes: la entrada 7 de la tabla de 0x78AC
+D 0x79A0 0x79EA tira_09 Tira de eventos de 74 bytes: la entrada 9 de la tabla de 0x78AC
+D 0x79EA 0x7A34 tira_0A Tira de eventos de 74 bytes: la entrada 10 de la tabla de 0x78AC
+D 0x7A34 0x7A46 tira_0B Tira de eventos de 18 bytes: la entrada 15 de la tabla de 0x78AC
+D 0x7A46 0x7A60 tira_0C Tira de eventos de 26 bytes: la entrada 16 de la tabla de 0x78AC
+D 0x7A60 0x7A74 tira_0D Tira de eventos de 20 bytes: la entrada 8 de la tabla de 0x78AC
+D 0x7A74 0x7A9A tira_0E Tira de eventos de 38 bytes: la entrada 13 de la tabla de 0x78AC
+D 0x7A9A 0x7AAC tira_0F Tira de eventos de 18 bytes: la entrada 14 de la tabla de 0x78AC
+D 0x7AAC 0x7AB8 tira_10 Tira de eventos de 12 bytes: la entrada 19 de la tabla de 0x78AC
+D 0x7AB8 0x7AC4 tira_11 Tira de eventos de 12 bytes: la entrada 20 de la tabla de 0x78AC
+D 0x7AC4 0x7ACB tira_12 Tira de eventos de 7 bytes: la entrada 11 de la tabla de 0x78AC
+D 0x7ACB 0x7AD2 tira_13 Tira de eventos de 7 bytes: la entrada 12 de la tabla de 0x78AC
+D 0x7AD2 0x7ADA tira_14 Tira de eventos de 8 bytes: la entrada 21 de la tabla de 0x78AC
+D 0x7ADA 0x7AE2 tira_15 Tira de eventos de 8 bytes: la entrada 22 de la tabla de 0x78AC
+D 0x7AE2 0x7AEA tira_16 Tira de eventos de 8 bytes: la entrada 23 de la tabla de 0x78AC
+D 0x7AEA 0x7AFB tira_17 Tira de eventos de 17 bytes: la entrada 17 de la tabla de 0x78AC
+D 0x7AFB 0x7B0C tira_18 Tira de eventos de 17 bytes: la entrada 18 de la tabla de 0x78AC
+D 0x7B0C 0x7B11 tira_19 Tira de eventos de 5 bytes: la entrada 24 de la tabla de 0x78AC
+D 0x7B11 0x7B16 tira_1A Tira de eventos de 5 bytes: la entrada 25 de la tabla de 0x78AC
+D 0x7B16 0x7B1B tira_1B Tira de eventos de 5 bytes: la entrada 26 de la tabla de 0x78AC
+D 0x7B1B 0x7B35 tira_1C Tira de eventos de 26 bytes: la entrada 27 de la tabla de 0x78AC
+D 0x7B35 0x7B4C tira_1D Tira de eventos de 23 bytes: la entrada 28 de la tabla de 0x78AC
+D 0x7B4C 0x7B6A tira_1E Tira de eventos de 30 bytes: la entrada 29 de la tabla de 0x78AC
+D 0x7B6A 0x7B6B tira_1F Tira de eventos de 1 bytes: la entrada 30 de la tabla de 0x78AC
+D 0x7B6B 0x7B83 tira_20 Tira de eventos de 24 bytes: la entrada 31 de la tabla de 0x78AC
+D 0x7B83 0x7B9B tira_21 Tira de eventos de 24 bytes: la entrada 32 de la tabla de 0x78AC
+D 0x7B9B 0x7B9C tira_22 Tira de eventos de 1 bytes: la entrada 33 de la tabla de 0x78AC
+D 0x7B9C 0x7BB6 tira_23 Tira de eventos de 26 bytes: la entrada 34 de la tabla de 0x78AC
+D 0x7BB6 0x7BD7 tira_24 Tira de eventos de 33 bytes: la entrada 35 de la tabla de 0x78AC
+D 0x7BD7 0x7BD8 tira_25 Tira de eventos de 1 bytes: la entrada 36 de la tabla de 0x78AC
+D 0x7BD8 0x7BED tira_26 Tira de eventos de 21 bytes: la entrada 37 de la tabla de 0x78AC
+D 0x7BED 0x7BFF tira_27 Tira de eventos de 18 bytes: la entrada 38 de la tabla de 0x78AC
+D 0x7BFF 0x7C12 tira_28 Tira de eventos de 19 bytes: la entrada 39 de la tabla de 0x78AC
+D 0x7C12 0x7C1C tira_29 Tira de eventos de 10 bytes: la entrada 40 de la tabla de 0x78AC
+D 0x7C1C 0x7C2A tira_2A Tira de eventos de 14 bytes: la entrada 41 de la tabla de 0x78AC
+D 0x7C2A 0x7C2B tira_2B Tira de eventos de 1 bytes: la entrada 42 de la tabla de 0x78AC
+D 0x7C2B 0x7C8E tira_2C Tira de eventos de 99 bytes: la entrada 43 de la tabla de 0x78AC
+D 0x7C8E 0x7CDA tira_2D Tira de eventos de 76 bytes: la entrada 44 de la tabla de 0x78AC
+D 0x7CDA 0x7CF8 tabla_de_poses Quince punteros a las poses de la barra, una por paso. 0x5FCD indexa por dos la tabla que arranca en 0x7CB6 con (0xE105), y solo entra con el 0x12 o mayor: por eso la palabra de 0x7CDA es la entrada 0x12 y la tabla empieza de verdad aqui
+F 0x7CDA w1
+D 0x7CF8 0x7D21 pose_00 Pose de la barra en el paso 0x12: un byte de cuenta -0x28, o sea 10 fichas de sprite- y las fichas que 0x5FE7 copia a 0xE0C0
+D 0x7D21 0x7D4E pose_01 Pose de la barra en el paso 0x13: un byte de cuenta -0x2C, o sea 11 fichas de sprite- y las fichas que 0x5FE7 copia a 0xE0C0
+D 0x7D4E 0x7D7F pose_02 Pose de la barra en el paso 0x14: un byte de cuenta -0x30, o sea 12 fichas de sprite- y las fichas que 0x5FE7 copia a 0xE0C0
+D 0x7D7F 0x7DA8 pose_03 Pose de la barra en el paso 0x15: un byte de cuenta -0x28, o sea 10 fichas de sprite- y las fichas que 0x5FE7 copia a 0xE0C0
+D 0x7DA8 0x7DD5 pose_04 Pose de la barra en el paso 0x16: un byte de cuenta -0x2C, o sea 11 fichas de sprite- y las fichas que 0x5FE7 copia a 0xE0C0
+D 0x7DD5 0x7E0E pose_05 Pose de la barra en el paso 0x17: un byte de cuenta -0x38, o sea 14 fichas de sprite- y las fichas que 0x5FE7 copia a 0xE0C0
+D 0x7E0E 0x7E47 pose_06 Pose de la barra en el paso 0x18: un byte de cuenta -0x38, o sea 14 fichas de sprite- y las fichas que 0x5FE7 copia a 0xE0C0
+D 0x7E47 0x7E80 pose_07 Pose de la barra en el paso 0x19: un byte de cuenta -0x38, o sea 14 fichas de sprite- y las fichas que 0x5FE7 copia a 0xE0C0
+D 0x7E80 0x7EB9 pose_08 Pose de la barra en el paso 0x1A: un byte de cuenta -0x38, o sea 14 fichas de sprite- y las fichas que 0x5FE7 copia a 0xE0C0
+D 0x7EB9 0x7EF2 pose_09 Pose de la barra en el paso 0x1B: un byte de cuenta -0x38, o sea 14 fichas de sprite- y las fichas que 0x5FE7 copia a 0xE0C0
+D 0x7EF2 0x7F2B pose_10 Pose de la barra en el paso 0x1C: un byte de cuenta -0x38, o sea 14 fichas de sprite- y las fichas que 0x5FE7 copia a 0xE0C0
+D 0x7F2B 0x7F58 pose_11 Pose de la barra en el paso 0x1D: un byte de cuenta -0x2C, o sea 11 fichas de sprite- y las fichas que 0x5FE7 copia a 0xE0C0
+D 0x7F58 0x7F85 pose_12 Pose de la barra en el paso 0x1E: un byte de cuenta -0x2C, o sea 11 fichas de sprite- y las fichas que 0x5FE7 copia a 0xE0C0
+D 0x7F85 0x7FB6 pose_13 Pose de la barra en el paso 0x1F: un byte de cuenta -0x30, o sea 12 fichas de sprite- y las fichas que 0x5FE7 copia a 0xE0C0
+D 0x7FB6 0x7FE7 pose_14 Pose de la barra en el paso 0x20: un byte de cuenta -0x30, o sea 12 fichas de sprite- y las fichas que 0x5FE7 copia a 0xE0C0
+D 0x7FE7 0x8000 relleno_final Los 25 bytes de 0xFF con los que acaba el cartucho

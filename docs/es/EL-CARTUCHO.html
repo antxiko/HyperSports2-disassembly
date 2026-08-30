@@ -1,0 +1,106 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>El cartucho — Hyper Sports 2 (Konami, 1984)</title>
+<style>
+:root{--tinta:#cfd0d4;--suave:#83868f;--fondo:#000;--panel:#0c0e13;--linea:#23262e;
+  --rojo:#ff897d;--cyan:#65dbef;--verde:#3eb849;--oro:#ded087}
+@media (prefers-color-scheme:light){:root{--tinta:#191a1e;--suave:#5a5d66;--fondo:#e9e7e1;
+  --panel:#f7f6f2;--linea:#d0cdc5;--rojo:#b23f34;--cyan:#1c6b7c;--verde:#2b7734;--oro:#8a7420}}
+:root[data-theme="dark"]{--tinta:#cfd0d4;--suave:#83868f;--fondo:#000;--panel:#0c0e13;
+  --linea:#23262e;--rojo:#ff897d;--cyan:#65dbef;--verde:#3eb849;--oro:#ded087}
+:root[data-theme="light"]{--tinta:#191a1e;--suave:#5a5d66;--fondo:#e9e7e1;--panel:#f7f6f2;
+  --linea:#d0cdc5;--rojo:#b23f34;--cyan:#1c6b7c;--verde:#2b7734;--oro:#8a7420}
+*{box-sizing:border-box}
+body{margin:0;background:var(--fondo);color:var(--tinta);padding:0 1.25rem 6rem;
+  font:15px/1.7 ui-monospace,"SF Mono",Menlo,Consolas,monospace}
+.w{max-width:1120px;margin:0 auto}
+.n{max-width:68ch}
+h1,h2,h3,h4{font-weight:400;text-wrap:balance}
+a{color:var(--cyan)}
+img{image-rendering:pixelated;max-width:100%;height:auto;display:block}
+header.top{display:flex;flex-direction:column;align-items:center;gap:1.5rem;
+  padding:4rem 0 2rem;text-align:center}
+header.top img{width:min(100%,642px)}
+.claim{max-width:60ch;color:var(--suave);font-size:1.05rem}
+.claim b{color:var(--tinta);font-weight:400}
+.ficha{display:flex;flex-wrap:wrap;justify-content:center;gap:0 1.5rem;width:100%;
+  font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--suave);
+  border-top:1px solid var(--linea);border-bottom:1px solid var(--linea);padding:.85rem 0}
+.ficha b{color:var(--rojo);font-weight:400}
+nav{display:flex;flex-wrap:wrap;gap:1.25rem;justify-content:center;padding:1.25rem 0;
+  font-size:12px;letter-spacing:.08em;text-transform:uppercase}
+nav a{color:var(--suave);text-decoration:none;border-bottom:1px solid transparent}
+nav a:hover,nav a:focus{color:var(--tinta);border-bottom-color:var(--rojo)}
+nav.docs{border-top:1px solid var(--linea);border-bottom:1px solid var(--linea);
+  margin-bottom:1rem}
+section{margin-top:4.5rem;scroll-margin-top:1rem}
+section>h2{font-size:1rem;letter-spacing:.1em;text-transform:uppercase;
+  border-left:3px solid var(--rojo);padding-left:.9rem;margin:0 0 1.5rem}
+.cifras{display:grid;gap:1px;background:var(--linea);border:1px solid var(--linea);
+  grid-template-columns:repeat(auto-fit,minmax(160px,1fr))}
+.cifra{background:var(--panel);padding:1.1rem}
+.cifra b{display:block;font-size:1.7rem;color:var(--oro);font-weight:400;
+  font-variant-numeric:tabular-nums;line-height:1.2}
+.cifra span{font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--suave)}
+.hall{border-top:1px solid var(--linea);padding-top:1.75rem;margin-top:2.5rem}
+.hall:first-of-type{border-top:0;padding-top:0;margin-top:0}
+.hall h3{margin:0 0 .75rem;font-size:1.15rem;color:var(--rojo)}
+.hall h4{color:var(--oro);margin:1.5rem 0 .5rem;font-size:.95rem}
+.hall p{margin:0 0 1rem}
+pre.asm{background:var(--panel);border-left:2px solid var(--verde);margin:1.25rem 0;
+  padding:1rem 1.1rem;overflow-x:auto;font-size:13px;line-height:1.6;color:var(--tinta)}
+.par{display:grid;gap:1.25rem;grid-template-columns:1fr}
+@media(min-width:820px){.par{grid-template-columns:1fr 1fr}}
+.par figure{margin:0}
+table{border-collapse:collapse;width:100%;margin:1.25rem 0;font-size:13px;display:block;
+  overflow-x:auto}
+th,td{text-align:left;padding:.5rem .75rem;border-bottom:1px solid var(--linea)}
+th{color:var(--suave);font-weight:400;font-size:11px;letter-spacing:.07em;text-transform:uppercase}
+td.num{font-variant-numeric:tabular-nums;color:var(--oro)}
+.nivel{margin-top:2rem}
+.nivel h3{margin:0 0 .9rem;font-size:.95rem;letter-spacing:.06em;text-transform:uppercase}
+.nivel em{color:var(--cyan);font-style:normal}
+.sep{color:var(--suave);margin:0 .6rem}
+.rejilla{display:grid;gap:.9rem;grid-template-columns:repeat(auto-fill,minmax(250px,1fr))}
+.rejilla figure{margin:0;background:var(--panel);box-shadow:0 0 0 1px var(--linea)}
+.rejilla figcaption{display:flex;justify-content:space-between;padding:.45rem .65rem;
+  font-size:11px;color:var(--suave);border-top:1px solid var(--linea)}
+.dir{font-variant-numeric:tabular-nums;color:var(--verde)}
+footer{margin-top:5rem;padding-top:1.5rem;border-top:1px solid var(--linea);
+  color:var(--suave);font-size:12px}
+
+/* Aviso de trabajo en curso: tiene que verse antes que las cifras, porque un
+   100% mal leido hace mas dano que no ponerlo. */
+.aviso{background:#3a2a10;border-left:3px solid var(--oro);margin:1.5rem auto;
+  padding:1rem 1.2rem;max-width:900px;border-radius:4px}
+.aviso p{margin:0;color:var(--tinta);font-size:15px;line-height:1.65}
+.galeria{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+  gap:1.5rem;margin:1.5rem 0}
+.galeria figure{margin:0}
+.galeria img{width:100%;height:auto;image-rendering:pixelated;
+  border:1px solid var(--linea);border-radius:3px}
+.galeria figcaption{color:var(--suave);font-size:13px;margin-top:.5rem}
+audio{display:block;width:100%;max-width:640px;margin:.75rem 0 1.5rem}
+</style>
+<div class="w"><nav class="top"><a href="index.html">Portada</a><a href="EMPEZAR.html">Empezar</a><a href="EL-JUEGO.html">El juego</a><a href="EL-CARTUCHO.html" style=color:var(--tinta)>El cartucho</a><a href="EL-CODIGO.html">El código</a><a href="HALLAZGOS.html">Hallazgos</a><a href="EN-EL-EMULADOR.html">En el emulador</a><a href="PREGUNTAS-ABIERTAS.html">Preguntas abiertas</a><a href="../THE-CARTRIDGE.html" style="margin-left:auto;color:var(--oro)">English</a></nav>
+<h1 id="el-cartucho">El cartucho</h1>
+<p>16.384 bytes que se mapean en la página 1 del MSX, 0x4000-0x7FFF. La cabecera de 0x4000 es la de siempre: la marca <code>AB</code> y, de los cuatro vectores, solo INIT relleno, apuntando a 0x4064.</p>
+<h2 id="en-que-se-van-los-16-kb">En qué se van los 16 KB</h2>
+<table><tr><th></th><th>bytes</th><th>parte</th></tr><tr><td>código trazado</td><td>6.956</td><td>42,46 %</td></tr><tr><td>datos identificados</td><td>9.428</td><td>57,54 %</td></tr><tr><td>sin explicar</td><td>0</td><td>0,00 %</td></tr></table>
+<p>Los datos no son un pegote: son 151 rangos con nombre, cada uno cerrado contra lo que lo lee. Esta tabla la imprime <code>make sanity</code>, y falla si sobra un solo byte.</p>
+<h2 id="el-chip-de-video">El chip de vídeo</h2>
+<p><code>MANDA_LOS_REGISTROS_DEL_VDP</code> (0x4476) manda por la BIOS, uno a uno, los ocho bytes de 0x4487. Dejan la máquina en SCREEN 2 con sprites de 16x16 y reparten la memoria así:</p>
+<table><tr><th>tabla</th><th>dirección</th></tr><tr><td>nombres</td><td>0x3800</td></tr><tr><td>colores</td><td>0x0000</td></tr><tr><td>patrones</td><td>0x2000</td></tr><tr><td>atributos de sprite</td><td>0x3B00</td></tr><tr><td>patrones de sprite</td><td>0x1800</td></tr></table>
+<p>El borde es negro. Patrones y colores tienen sus tres tercios independientes, y el cartucho lo aprovecha: la fuente va a los tres, y cada prueba solo cambia los dos de abajo.</p>
+<h2 id="como-se-guardan-los-graficos">Cómo se guardan los gráficos</h2>
+<p>Nada se guarda como pantalla. Hay tres intérpretes:</p>
+<ul><li><b>El flujo por rachas</b> (0x43FB). Manda un byte de cuenta: el 0x00 lo acaba, el 0x80 trae otra dirección de VRAM en los dos bytes siguientes, con el bit 7 puesto copia <code>n &amp; 0x7F</code> bytes literales, y sin él repite <code>n</code> veces el byte que sigue. Entrando por 0x43F5 el flujo trae su destino delante.</li><li><b>La lista de tiles</b> (0x4050). Dos bytes con la casilla de la tabla de nombres y detrás los tiles; el 0xFE salta a otra casilla y el 0xFF acaba.</li><li><b>El guión del título</b> (0x423C). Cada byte es una cuenta: con el bit 7 rellena ocho casillas con el byte que sigue, y sin él repite esas mismas ocho —un tile entero— esa cantidad de veces.</li></ul>
+<p>Todas las imágenes de esta web salen de ejecutar esos tres en Python, en <code>tools/graficos.py</code>. Si un rango o un formato estuvieran mal, lo que saldría sería ruido.</p>
+<h2 id="donde-viven-los-graficos-de-cada-prueba">Dónde viven los gráficos de cada prueba</h2>
+<p>La tabla de 0x6C3A tiene <b>cuatro registros de tres punteros</b>: patrones a la VRAM 0x2A00, colores a la 0x0A00 y sprites a la 0x1800, indexados por (0xE080) y 3 por seis. El cuarto registro es la pantalla de records, que comparte sus sprites con el tiro con arco. Los fondos están en otro sitio: tres palabras en 0x42A0, directos a la tabla de nombres desde la fila 8.</p>
+<h2 id="el-sonido">El sonido</h2>
+<p>Tres canales de doce bytes cada uno desde 0xE010: el contador de la nota, lo que dura, el estado —que es el número del efecto que suena, con el bit 7 para las órdenes largas y el bit 6 para el ruido—, el puntero al flujo, la octava, el volumen de fondo, el volumen que suena, la cuenta del apagado, la altura y el desafine.</p>
+<p><code>CORRE_EL_SONIDO</code> (0x7696) les da un paso a los tres cada cuadro y deja en 0xE036 el <code>or</code> de los tres estados: esa es la bandera de &quot;algo está sonando&quot; que espera medio cartucho. Hay 48 efectos y melodías cortas en la tabla de 0x78AC, y la tabla de tonos es una octava de doce periodos —las demás salen doblando.</p>
+<h2 id="la-ram">La RAM</h2>
+<p>0xE000 es el estado y 0xE001 el subestado; 0xE003 el contador de cuadros y 0xE004 la espera general. De 0xE043 a 0xE048 está el mando tal como se lee y como estaba. 0xE063 guarda los puntos en BCD, 0xE080 la prueba, y en 0xE0C0 están las fichas de sprite que suben al VDP de una tacada. La pila arranca en 0xE400.</p>
+<footer><p><em>Hyper Sports 2</em> lo publico Konami para MSX; su numero de catalogo es RC-717 y son 16 KB. Todos los derechos sobre el juego siguen siendo de sus titulares. Este trabajo es de preservacion, estudio y documentacion, y la imagen del cartucho no se distribuye.</p></footer></div>

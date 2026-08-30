@@ -1,0 +1,100 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>The game — Hyper Sports 2 (Konami, 1984)</title>
+<style>
+:root{--tinta:#cfd0d4;--suave:#83868f;--fondo:#000;--panel:#0c0e13;--linea:#23262e;
+  --rojo:#ff897d;--cyan:#65dbef;--verde:#3eb849;--oro:#ded087}
+@media (prefers-color-scheme:light){:root{--tinta:#191a1e;--suave:#5a5d66;--fondo:#e9e7e1;
+  --panel:#f7f6f2;--linea:#d0cdc5;--rojo:#b23f34;--cyan:#1c6b7c;--verde:#2b7734;--oro:#8a7420}}
+:root[data-theme="dark"]{--tinta:#cfd0d4;--suave:#83868f;--fondo:#000;--panel:#0c0e13;
+  --linea:#23262e;--rojo:#ff897d;--cyan:#65dbef;--verde:#3eb849;--oro:#ded087}
+:root[data-theme="light"]{--tinta:#191a1e;--suave:#5a5d66;--fondo:#e9e7e1;--panel:#f7f6f2;
+  --linea:#d0cdc5;--rojo:#b23f34;--cyan:#1c6b7c;--verde:#2b7734;--oro:#8a7420}
+*{box-sizing:border-box}
+body{margin:0;background:var(--fondo);color:var(--tinta);padding:0 1.25rem 6rem;
+  font:15px/1.7 ui-monospace,"SF Mono",Menlo,Consolas,monospace}
+.w{max-width:1120px;margin:0 auto}
+.n{max-width:68ch}
+h1,h2,h3,h4{font-weight:400;text-wrap:balance}
+a{color:var(--cyan)}
+img{image-rendering:pixelated;max-width:100%;height:auto;display:block}
+header.top{display:flex;flex-direction:column;align-items:center;gap:1.5rem;
+  padding:4rem 0 2rem;text-align:center}
+header.top img{width:min(100%,642px)}
+.claim{max-width:60ch;color:var(--suave);font-size:1.05rem}
+.claim b{color:var(--tinta);font-weight:400}
+.ficha{display:flex;flex-wrap:wrap;justify-content:center;gap:0 1.5rem;width:100%;
+  font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--suave);
+  border-top:1px solid var(--linea);border-bottom:1px solid var(--linea);padding:.85rem 0}
+.ficha b{color:var(--rojo);font-weight:400}
+nav{display:flex;flex-wrap:wrap;gap:1.25rem;justify-content:center;padding:1.25rem 0;
+  font-size:12px;letter-spacing:.08em;text-transform:uppercase}
+nav a{color:var(--suave);text-decoration:none;border-bottom:1px solid transparent}
+nav a:hover,nav a:focus{color:var(--tinta);border-bottom-color:var(--rojo)}
+nav.docs{border-top:1px solid var(--linea);border-bottom:1px solid var(--linea);
+  margin-bottom:1rem}
+section{margin-top:4.5rem;scroll-margin-top:1rem}
+section>h2{font-size:1rem;letter-spacing:.1em;text-transform:uppercase;
+  border-left:3px solid var(--rojo);padding-left:.9rem;margin:0 0 1.5rem}
+.cifras{display:grid;gap:1px;background:var(--linea);border:1px solid var(--linea);
+  grid-template-columns:repeat(auto-fit,minmax(160px,1fr))}
+.cifra{background:var(--panel);padding:1.1rem}
+.cifra b{display:block;font-size:1.7rem;color:var(--oro);font-weight:400;
+  font-variant-numeric:tabular-nums;line-height:1.2}
+.cifra span{font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--suave)}
+.hall{border-top:1px solid var(--linea);padding-top:1.75rem;margin-top:2.5rem}
+.hall:first-of-type{border-top:0;padding-top:0;margin-top:0}
+.hall h3{margin:0 0 .75rem;font-size:1.15rem;color:var(--rojo)}
+.hall h4{color:var(--oro);margin:1.5rem 0 .5rem;font-size:.95rem}
+.hall p{margin:0 0 1rem}
+pre.asm{background:var(--panel);border-left:2px solid var(--verde);margin:1.25rem 0;
+  padding:1rem 1.1rem;overflow-x:auto;font-size:13px;line-height:1.6;color:var(--tinta)}
+.par{display:grid;gap:1.25rem;grid-template-columns:1fr}
+@media(min-width:820px){.par{grid-template-columns:1fr 1fr}}
+.par figure{margin:0}
+table{border-collapse:collapse;width:100%;margin:1.25rem 0;font-size:13px;display:block;
+  overflow-x:auto}
+th,td{text-align:left;padding:.5rem .75rem;border-bottom:1px solid var(--linea)}
+th{color:var(--suave);font-weight:400;font-size:11px;letter-spacing:.07em;text-transform:uppercase}
+td.num{font-variant-numeric:tabular-nums;color:var(--oro)}
+.nivel{margin-top:2rem}
+.nivel h3{margin:0 0 .9rem;font-size:.95rem;letter-spacing:.06em;text-transform:uppercase}
+.nivel em{color:var(--cyan);font-style:normal}
+.sep{color:var(--suave);margin:0 .6rem}
+.rejilla{display:grid;gap:.9rem;grid-template-columns:repeat(auto-fill,minmax(250px,1fr))}
+.rejilla figure{margin:0;background:var(--panel);box-shadow:0 0 0 1px var(--linea)}
+.rejilla figcaption{display:flex;justify-content:space-between;padding:.45rem .65rem;
+  font-size:11px;color:var(--suave);border-top:1px solid var(--linea)}
+.dir{font-variant-numeric:tabular-nums;color:var(--verde)}
+footer{margin-top:5rem;padding-top:1.5rem;border-top:1px solid var(--linea);
+  color:var(--suave);font-size:12px}
+
+/* Aviso de trabajo en curso: tiene que verse antes que las cifras, porque un
+   100% mal leido hace mas dano que no ponerlo. */
+.aviso{background:#3a2a10;border-left:3px solid var(--oro);margin:1.5rem auto;
+  padding:1rem 1.2rem;max-width:900px;border-radius:4px}
+.aviso p{margin:0;color:var(--tinta);font-size:15px;line-height:1.65}
+.galeria{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+  gap:1.5rem;margin:1.5rem 0}
+.galeria figure{margin:0}
+.galeria img{width:100%;height:auto;image-rendering:pixelated;
+  border:1px solid var(--linea);border-radius:3px}
+.galeria figcaption{color:var(--suave);font-size:13px;margin-top:.5rem}
+audio{display:block;width:100%;max-width:640px;margin:.75rem 0 1.5rem}
+</style>
+<div class="w"><nav class="top"><a href="index.html">Home</a><a href="GETTING-STARTED.html">Start</a><a href="THE-GAME.html" style=color:var(--tinta)>The game</a><a href="THE-CARTRIDGE.html">The cartridge</a><a href="THE-CODE.html">The code</a><a href="FINDINGS.html">Findings</a><a href="IN-THE-EMULATOR.html">In the emulator</a><a href="OPEN-QUESTIONS.html">Open questions</a><a href="es/EL-JUEGO.html" style="margin-left:auto;color:var(--oro)">Castellano</a></nav>
+<h1 id="the-game">The game</h1>
+<p>Three events, in this order, written into the ROM at 0x4791 as three rows of sixteen tiles each: <b>SKEET SHOOTING</b>, <b>ARCHERY</b> and <b>WEIGHT LIFTING</b>. The byte at 0xE080 says which one is running, and its two low bits index every table that splits by event.</p>
+<h2 id="skeet-shooting">Skeet shooting</h2>
+<p>Two crosshairs and a clock. <code>LANZA_UN_PLATO</code> (0x5738) releases a clay every 0x18 frames into whichever of the three slots at 0xE100 is free; each slot is sixteen bytes with the clay&#x27;s posture, its 16-bit X and Y and its two speeds. <code>CAEN_LOS_PLATOS</code> adds gravity, and the gravity is bigger the higher the clay is, so the arc tightens as it falls.</p>
+<p>The trigger fires the top barrel with bit 3 of the joystick and the bottom one with bits 2 and 4. <code>MIRA_LOS_IMPACTOS</code> (0x58E3) walks the three slots and, for each pellet, allows six points of slack in X and six in Y — and only postures 0 to 3 can be broken.</p>
+<h2 id="archery">Archery</h2>
+<p>The readouts are three, and the screen names them: <code>ANGLE</code> on row 10, <code>WIND</code> at the bottom and <code>SCORE</code> beside it.</p>
+<ul><li>The <b>angle</b> rises 0.28 degrees on each press of the button and wraps round at 4.00 (0x5B42, in BCD, with the hundreds byte compared against 4).</li><li>The <b>wind</b> is not random either: <code>SIGUIENTE_VIENTO</code> (0x5BB8) walks sixteen values at 0x5BCB in a ring, bit 7 for the side and the low nibble for the strength. As the arrow rises, <code>CORRIGE_LA_DERIVA</code> (0x5B8C) bends it one point per stretch of the table at 0x5BB0.</li><li>The <b>hit</b> is decided by <code>QUE_ANILLO_HA_TOCADO</code> (0x5CCF) against a target centred on X 0xBC and Y 0x53 — the same two constants you can see on the screen — and each ring pays what the ten-word BCD table at 0x5D37 says: 10, 100, 170, 210, 250, 290, 320, 350, 400 and 600.</li></ul>
+<h2 id="weight-lifting">Weight lifting</h2>
+<p>First you pick a class. <code>ELIGE_LA_CATEGORIA</code> (0x75F7) steps through eight of them with any direction and takes it with the button; <code>PINTA_LA_CATEGORIA</code> (0x756D) writes its name, fourteen tiles from 0x7587, into the <code>CHOOSE CLASS</code> sign, and <code>PINTA_LOS_KILOS</code> (0x6F25) puts its weight in the <code>KG</code> board: 150, 165, 180, 195, 210, 225, 240 and 260 kilos.</p>
+<p>Then the <code>POWER</code> bar on row 23 (0x6E24), which the table at 0x6E77 drains every frame and the joystick feeds. The bar rises through the 36 heights at 0x6ED4, and once it is up, <b>three judges&#x27; lights</b> come on in column 2, one every 0x20 frames (0x6F78). At the third the lift is good, and 0x6FA2 drops the two plates of the barbell from Y 0x4A, two points per frame.</p>
+<h2 id="the-scoreboard-and-what-carries-over">The scoreboard, and what carries over</h2>
+<p>The top of every screen is the same: <code>SCORE</code>, <code>HI</code>, <code>YOU</code>, <code>WORLD RECORD</code>, <code>QUALIFY</code> and the three <code>1st TRY</code> / <code>2nd TRY</code> / <code>3rd TRY</code> rows, painted from the stream at 0x4749 with the label list at 0x4712 over it. Points are three bytes of BCD at 0xE063 and top out at 999999.</p>
+<p>After the third event comes the records screen, and then the cycle starts again: 0xE080 counts 0, 1, 2, 3 and at 3 the table of records takes over — except that bit 2 of the same byte skips it every other round.</p>
+<footer><p><em>Hyper Sports 2</em> was published by Konami for the MSX; its catalogue number is RC-717 and it is 16 KB. All rights in the game remain with their holders. This is preservation, study and documentation work, and the cartridge image is not distributed.</p></footer></div>
