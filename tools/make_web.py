@@ -268,7 +268,12 @@ def main(argv):
     imgdir, salida, idioma = argv[1:4]
     t = TXT[idioma]
 
-    cabecera = "<h1>Hyper Sports 2</h1>"
+    # El "logotipo" de la cabecera no es un montaje ni una captura: es el rotulo
+    # que el propio cartucho pinta en su pantalla de titulo, sacado ejecutando
+    # su lista de 0x480C (graficos.py). Si el PNG no esta, se cae al texto.
+    ruta_logo = os.path.join(imgdir, "rotulo.png")
+    cabecera = (f'<img src="{img64(ruta_logo)}" alt="Hyper Sports 2">'
+                if os.path.exists(ruta_logo) else "<h1>Hyper Sports 2</h1>")
 
     nav = "".join(f'<a href="{h}">{x}</a>' for h, x in t["nav"])
     nav += "".join(f'<a href="{h}">{x}</a>' for h, x in t["docnav"])

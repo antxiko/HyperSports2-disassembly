@@ -169,12 +169,14 @@ class Pantalla:
             self.v[(vram + i) & 0x3FFF] = self.c.b(origen + i)
 
     # --- lo que ve el VDP --------------------------------------------------
-    def dibuja(self, fn, esc=2):
-        w, h = 256 * esc, 192 * esc
+    def pinta(self, f0, f1, c0, c1, esc):
+        """Las casillas [f0,f1]x[c0,c1] leidas como las lee el VDP: cada tercio
+        con sus patrones y sus colores, que en SCREEN 2 son independientes."""
+        w, h = (c1 - c0 + 1) * 8 * esc, (f1 - f0 + 1) * 8 * esc
         px = bytearray(w * h * 3)
-        for fila in range(24):
+        for fila in range(f0, f1 + 1):
             tercio = fila // 8
-            for col in range(32):
+            for col in range(c0, c1 + 1):
                 t = self.v[NOMBRES + fila * 32 + col]
                 pb = PATRONES + tercio * 0x800 + t * 8
                 cb = COLORES + tercio * 0x800 + t * 8
@@ -185,10 +187,26 @@ class Pantalla:
                     for x in range(8):
                         c = tinta if (linea >> (7 - x)) & 1 else papel
                         for dy in range(esc):
-                            base = (((fila * 8 + f) * esc + dy) * w + (col * 8 + x) * esc) * 3
+                            base = ((((fila - f0) * 8 + f) * esc + dy) * w
+                                    + ((col - c0) * 8 + x) * esc) * 3
                             for dx in range(esc):
                                 px[base + dx * 3:base + dx * 3 + 3] = bytes(c)
-        png(w, h, px, fn)
+        return w, h, px
+
+    def dibuja(self, fn, esc=2):
+        png(*self.pinta(0, 23, 0, 31, esc), fn)
+
+    def recorta(self, fn, f0, f1, c0, c1, esc=4):
+        png(*self.pinta(f0, f1, c0, c1, esc), fn)
+
+    def marco(self):
+        """Las cuatro esquinas de lo escrito en la tabla de nombres."""
+        o = [(f, c) for f in range(24) for c in range(32)
+             if self.v[NOMBRES + f * 32 + c]]
+        if not o:
+            raise SystemExit("  la tabla de nombres ha salido vacia")
+        return (min(f for f, _ in o), max(f for f, _ in o),
+                min(c for _, c in o), max(c for _, c in o))
 
 
 def hoja_de_sprites(v, fn, cols=8, esc=3, margen=1):
@@ -254,6 +272,11 @@ def main(argv):
     p.guion(cart.bloque("guion_del_titulo")[0], 0x0600)
     p.flujo_con_direccion(cart.bloque("flujo_del_titulo")[0])
     p.lista(cart.bloque("lista_480C")[0])
+    # El rotulo de la cabecera de la web no se recorta a ojo: la lista de 0x480C
+    # pinta el logotipo Y NADA MAS -las letras vienen luego, en la de 0x47C1-,
+    # asi que en este punto el marco de lo escrito ES el rotulo.
+    p.recorta(os.path.join(destino, "rotulo.png"), *p.marco())
+    print("  rotulo.png: el logotipo HYPER SPORTS 2, lo que pinta la lista de 0x480C")
     p.lista(cart.bloque("lista_47C1")[0])
     filas = cart.bloque("nombres_de_las_pruebas")[0]
     for i in range(3):                             # tres filas, dos de separacion
