@@ -37,7 +37,7 @@ describen, de modo que sobreviven a un retrazado. Lo que hay en el `.notes`:
 | | |
 |---|---|
 | etiquetas con nombre | 314 |
-| comentarios anclados | 820 |
+| comentarios anclados | 829 |
 | rangos de datos con explicación | 151 |
 
 ## Qué hay aquí

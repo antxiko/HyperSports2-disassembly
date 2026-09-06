@@ -36,7 +36,7 @@ describe, so they survive a re-trace. What the `.notes` file holds:
 | | |
 |---|---|
 | named labels | 314 |
-| anchored comments | 820 |
+| anchored comments | 829 |
 | explained data ranges | 151 |
 
 ## What is in here

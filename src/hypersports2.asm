@@ -1369,7 +1369,7 @@ ARRANCA_ARCHERY:		; La segunda: las ocho fichas de sprite de 0x4C3D y los valore
 	ld bc,00020h		;4c2b   ; 0x20 bytes: ocho fichas
 	ldir		;4c2e
 	ld a,003h		;4c30
-	ld (0e145h),a		;4c32   ; E145 = 3
+	ld (0e145h),a		;4c32   ; E145 = 3: los tres centros que hay que clavar para que salga el secreto
 	ld a,007h		;4c35
 	ld (0e111h),a		;4c37   ; E111 = 7
 	jp ARRANCA_LA_CEREMONIA		;4c3a
@@ -1888,16 +1888,16 @@ L_4F54:
 	add hl,de			;4f55
 	djnz L_4F54		;4f56
 	ret nz			;4f58
-	ld a,(0e199h)		;4f59   ; E199 marca el desempate
+	ld a,(0e199h)		;4f59   ; E199 apaga los dos bichos: lo marca 0x591D cada vez que 0x58EF retira un plato -se fue por el borde o le alcanzo el perdigon- sin que E179 este puesto
 	and a			;4f5c
 	jr nz,L_4F6D		;4f5d
-	ld hl,0e19ah		;4f5f
+	ld hl,0e19ah		;4f5f   ; E19A cuenta las tandas limpias: la primera saca el pulpo y la segunda el pajaro
 	ld a,(hl)			;4f62
 	inc (hl)			;4f63   ; La primera vez lleva a 0x761A y la segunda a 0x762F
 	and a			;4f64
-	jp z,COPIA_LOS_NUEVE_BYTES		;4f65
+	jp z,SUELTA_EL_PULPO		;4f65
 	cp 001h		;4f68
-	jp z,REARRANCA_LAS_TIRAS		;4f6a
+	jp z,SUELTA_EL_PAJARO		;4f6a
 L_4F6D:
 	ld a,(0e151h)		;4f6d   ; E151: mientras haya algo en marcha, se espera
 	and a			;4f70
@@ -2049,15 +2049,25 @@ REMATE_DEL_SKEET:		; Deja en E151 el patron que toque y devuelve NZ para que la 
 SIGUE_ESPERANDO:		; Devuelve con el bit 0 puesto: aun no ha terminado
 	or 001h		;5062
 	ret			;5064
+
+; ----------------------------------------------------------------------
+; ######################################################################
+; EL SECRETO DE LA HALTEROFILIA. El jurado da el levantamiento por
+; bueno en 0x6F98 -tres luces- y deja E1A3 puesto. A partir de ahi,
+; cada vez que se pulsa el boton 0x523E sube E132. Cuando E132 llega a
+; 5, esta rutina pinta doce tiles 0x91 en la fila 16 y doce 0x92 en la
+; 17: son LAS FLORES del podio. Y 0x5248 cobra ademas 2000 puntos.
+; ######################################################################
+; ----------------------------------------------------------------------
 REMATE_DEL_WEIGHT:		; Con la barra arriba del todo (E132=5) pinta las dos filas de tiles y sigue con el levantador
 	ld hl,0e132h		;5065
 	ld a,(hl)			;5068
-	cp 005h		;5069   ; El 5 es la postura de haber levantado
+	cp 005h		;5069   ; EL SECRETO: la postura 5 es la ultima, la de haber levantado del todo
 	jr nz,L_5081		;506b
 	ld a,091h		;506d
 	inc hl			;506f
 	ld (hl),a			;5070
-	ld hl,03a07h		;5071   ; Fila 16, columna 7: doce tiles
+	ld hl,03a07h		;5071   ; Doce tiles del 0x91 en la fila 16 y doce del 0x92 en la 17: las flores sobre el podio
 	ld c,00ch		;5074
 	call RELLENA_256		;5076
 	ld l,027h		;5079   ; Y la fila de al lado, otros doce con el tile siguiente
@@ -2133,7 +2143,7 @@ L_50EB:
 	ex de,hl			;50f5
 	ld hl,0e003h		;50f6
 	ld a,(ix+000h)		;50f9
-	cp 005h		;50fc   ; La postura 5 con el bit 2 del contador a cero cuenta como la 7: asi parpadea al romperse
+	cp 005h		;50fc   ; La postura 5 alterna con la 7 cada cuatro fotogramas, y eso cambia el patron entre el 0x30 y el 0x38: el pajaro bate las alas
 	jr nz,L_5106		;50fe
 	bit 2,(hl)		;5100
 	jr nz,L_5106		;5102
@@ -2156,10 +2166,14 @@ L_5106:
 	ret			;511c
 
 ; ----------------------------------------------------------------------
-; DATOS dieciseis_de_5108: Los bytes que 0x5108 recorre de dos en dos,
-;   indexados con DE_MAS_A
+; DATOS patron_y_color_por_postura: Ocho parejas (patron, color) que 0x5108
+;   indexa por la postura de la ranura. De la 1 a la 3 son los platos, todos
+;   con el patron 0x00 y cambiando solo el color: 0x0F, 0x04 y 0x06. De la 4
+;   en adelante son los bichos: 0x2C/0x0F el pulpo, 0x30/0x04 y 0x38/0x04 el
+;   pajaro aleteando, y 0x34/0x0F su segunda ranura. AQUI es donde un sprite
+;   coge su color, porque el patron no lo lleva
 ;   0x511d..0x512d  (16 bytes)
-DATA_dieciseis_de_5108:
+DATA_patron_y_color_por_postura:
 	defb 000h,000h	; 511d
 	defb 000h,00fh	; 511f
 	defb 000h,004h	; 5121
@@ -2322,7 +2336,7 @@ WEIGHT_PASO_5:		; Con el mando y el levantamiento dado por bueno, sube la postur
 	and 008h		;5237   ; Bit 3 del mando
 	ld hl,0e132h		;5239
 	jr z,L_523F		;523c
-	inc (hl)			;523e
+	inc (hl)			;523e   ; Con el levantamiento ya valido, E132 sube uno por fotograma mientras el boton siga pulsado; el remate mira que llegue a 5
 L_523F:
 	ld a,(0e012h)		;523f   ; Mientras el canal de E012 suene, se espera
 	and a			;5242
@@ -2330,7 +2344,7 @@ L_523F:
 	call CAE_LA_BARRA		;5244
 	ret nz			;5247
 	ld a,(0e132h)		;5248
-	cp 005h		;524b   ; La postura 5 es la buena: entonces se cobran 0x20 puntos
+	cp 005h		;524b   ; Con E132 en 5 se suman los tres bytes de E134, con el 0x20 recien puesto en el de en medio: 2000 puntos en BCD
 	ld a,020h		;524d
 	ld (0e135h),a		;524f
 	ld de,0e134h		;5252
@@ -2993,7 +3007,7 @@ SUELTA_EL_PLATO:		; Rellena la ranura: 0x18 fotogramas hasta el siguiente y la p
 	ld a,(hl)			;575e
 	inc (hl)			;575f
 	ld c,001h		;5760
-	cp 00eh		;5762   ; En el plato 0x0E se lanzan de dos en dos...
+	cp 00eh		;5762   ; En el plato 0x0E la postura de partida sube a 2 y en el 0x1D a 3: no se lanzan mas platos, valen mas
 	jr nz,L_5767		;5764
 	inc c			;5766
 L_5767:
@@ -3274,7 +3288,7 @@ MIRA_LOS_IMPACTOS:		; Para cada plato mira si el disparo le ha dado, y si si, lo
 L_58E8:
 	push bc			;58e8
 	ld (0e200h),hl		;58e9   ; La ranura en curso se aparca en E200
-	call LE_HE_DADO		;58ec
+	call SE_ACABO_EL_PLATO		;58ec
 	call c,REVIENTA_EL_PLATO		;58ef   ; Con acarreo, el plato estaba tocado
 	pop bc			;58f2
 	ld hl,(0e200h)		;58f3
@@ -3333,7 +3347,7 @@ L_5944:
 	dec c			;5947
 	jr nz,L_5944		;5948
 	ret			;594a
-LE_HE_DADO:		; Devuelve con acarreo si el disparo cae dentro del plato: mira la Y y luego la distancia en X
+SE_ACABO_EL_PLATO:		; Devuelve con acarreo por dos motivos: el plato ha llegado a los ocho puntos del borde (0x5954), o el perdigon ya ha subido por encima de el (0x5965)
 	ld a,(hl)			;594b   ; La primera casilla de la ranura dice la postura
 	ld b,a			;594c
 	and a			;594d
@@ -3343,11 +3357,11 @@ LE_HE_DADO:		; Devuelve con acarreo si el disparo cae dentro del plato: mira la 
 	inc hl			;5951
 	inc hl			;5952
 	ld a,(hl)			;5953
-	add a,008h		;5954   ; Ocho de margen arriba y ocho abajo
+	add a,008h		;5954   ; X+8 por debajo de 0x10 es la franja de ocho puntos de los dos bordes: el plato se ha ido de la pantalla
 	cp 010h		;5956
 	ret c			;5958
 	ld a,b			;5959
-	cp 004h		;595a   ; Solo las posturas 0 a 3 se pueden reventar
+	cp 004h		;595a   ; De la postura 4 para arriba no se mira lo del perdigon: a los bichos no se les revienta por esa via
 	ret nc			;595c
 	dec hl			;595d
 	dec hl			;595e
@@ -3453,7 +3467,7 @@ L_59E3:
 L_59F5:
 	ld a,090h		;59f5   ; Sin ningun plato, la escopeta se queda apuntando a 0x90
 	ret			;59f7
-DISPARA:		; Con el mando, dispara el canon que toque: el bit 3 el de arriba y los bits 2 y 4 el de abajo
+DISPARA:		; Con el mando, dispara el canon que toque: el bit 3 el de ABAJO (E0C0) y los bits 2 y 4 el de ARRIBA (E0C4)
 	ld hl,0e043h		;59f8
 	bit 3,(hl)		;59fb   ; Bit 3 del mando: el canon de arriba
 	push hl			;59fd
@@ -3470,7 +3484,7 @@ DISPARA_ABAJO:		; El de abajo, el de 0xE0C0
 	ld de,0e0c0h		;5a0c
 	xor a			;5a0f
 UN_DISPARO:		; Apunta la escopeta, gasta un cartucho y mira si le da a alguno de los tres platos
-	ld (0e178h),a		;5a10
+	ld (0e178h),a		;5a10   ; E178 se queda con el canon que ha disparado: cero el de abajo y distinto de cero el de arriba. Es lo unico que hace falta acertar para que salga el pajaro
 	xor a			;5a13
 	ld (0e1aah),a		;5a14   ; E1AA a cero: todavia no ha dado
 	ld (0e203h),de		;5a17
@@ -3585,7 +3599,7 @@ COBRA_EL_PLATO:		; Suma al marcador lo que valga la postura en la que se rompio,
 	ld hl,(0e200h)		;5aad   ; La ranura que se aparco en E200
 	ld a,(hl)			;5ab0   ; Su postura, a E202
 	ld (0e202h),a		;5ab1
-	cp 004h		;5ab4   ; La postura 4 con E178 puesto marca E179
+	cp 004h		;5ab4   ; EL SECRETO: la postura 4 es el pulpo, y si E178 dice que se le dio con el canon de arriba, E179 queda marcado y 0x762F sacara el pajaro
 	jr nz,L_5AC5		;5ab6
 	ex af,af'			;5ab8
 	ld a,(0e178h)		;5ab9
@@ -3844,7 +3858,7 @@ REMATA_EL_PASO:		; Coloca las seis fichas, elige el motor que toca y deja ocho f
 	ld a,0c0h		;5c1a
 	ld (0e0c4h),a		;5c1c
 	ld (0e0dch),a		;5c1f
-	ld a,(0e145h)		;5c22
+	ld a,(0e145h)		;5c22   ; EL SECRETO: con E145 a cero -tres flechas en el centro- el remate no es el de siempre, sino el de las seis fichas de 0x5E59
 	and a			;5c25   ; E145 elige entre los dos remates
 	jr z,L_5C30		;5c26
 	ld a,008h		;5c28
@@ -4179,7 +4193,7 @@ MIRA_SI_ACIERTA:		; Si E204 cae en los ocho puntos por encima de (0xE0C4), pone 
 	ld hl,0e11dh		;5e20   ; E11D y E11E a cero
 	ld (hl),a			;5e23
 	inc hl			;5e24
-	ld a,07ch		;5e25   ; El patron 0x7C y el color 0x30
+	ld a,07ch		;5e25   ; El patron 0x7C es el rotulo 3000, y el 0x30 que va a E11E son los 3000 puntos en BCD: no es un color
 	ld c,030h		;5e27
 	ld (0e0d6h),a		;5e29
 	ld (hl),c			;5e2c
@@ -4187,7 +4201,7 @@ MIRA_SI_ACIERTA:		; Si E204 cae en los ocho puntos por encima de (0xE0C4), pone 
 	ld a,096h		;5e30   ; El sonido 0x96
 	jp ARRANCA_EL_EFECTO		;5e32
 ALTERNA_DOS_PATRONES:		; Los patrones de 0xE0CA y 0xE0D2 cambian cada ocho fotogramas entre 0x68/0x70 y 0x74/0x78
-	ld b,068h		;5e35
+	ld b,068h		;5e35   ; Los dos patrones que se alternan son las dos capas del pinguino que se mueven: el cuerpo (0x68/0x74) y las patas (0x70/0x78)
 	ld c,070h		;5e37
 	ld a,(0e003h)		;5e39
 	bit 3,a		;5e3c   ; Bit 3: ocho y ocho
@@ -4208,10 +4222,15 @@ COLOCA_LAS_SEIS_FICHAS:		; Las seis fichas de sprite de 0x5E59, tal cual
 	ret			;5e58
 
 ; ----------------------------------------------------------------------
-; DATOS veinticuatro_a_e0c4: Los 0x18 bytes que 0x5E4D copia con un ldir a
-;   0xE0C4: seis fichas de sprite
+; DATOS las_fichas_del_secreto: Las seis fichas de sprite del secreto del
+;   arco, con SU COLOR cada una, que 0x5E4D copia con un ldir a 0xE0C4. La
+;   primera es la manzana: patron 0x64 y color 0x06. Las tres siguientes son
+;   el MISMO pinguino, tres sprites superpuestos en la misma casilla con tres
+;   colores: el patron 0x68 en color 0x04, el 0x6C en 0x0F y el 0x70 en 0x0A.
+;   Asi se pinta una figura de tres colores en un MSX1, donde cada sprite es
+;   de un color solo
 ;   0x5e59..0x5e71  (24 bytes)
-DATA_veinticuatro_a_e0c4:
+DATA_las_fichas_del_secreto:
 	defb 020h,0e8h,064h,006h	; 5e59
 	defb 030h,0e4h,068h,004h	; 5e5d
 	defb 030h,0e4h,06ch,00fh	; 5e61
@@ -4610,7 +4629,17 @@ DATA_flujo_64C5:
 ; ======================================================================
 
 
-CUENTA_ATRAS_DEL_TIRO:		; Baja E144 y, justo al llegar a uno, si el anillo era el 9, baja la dificultad y suena
+
+; ----------------------------------------------------------------------
+; ######################################################################
+; EL SECRETO DEL TIRO CON ARCO. E145 arranca en 3 (0x4C32) y baja uno
+; cada vez que una flecha se clava en el anillo 9, que es EL CENTRO de
+; la diana -el que paga 600 en la tabla de 0x5D37-. Al tercer centro
+; E145 llega a cero, y entonces 0x5C22 no monta el remate de siempre:
+; copia las seis fichas de 0x5E59, que son la manzana y el pinguino.
+; ######################################################################
+; ----------------------------------------------------------------------
+CUENTA_ATRAS_DEL_TIRO:		; Baja E144 y, justo al llegar a uno, si la flecha se clavo en el centro, baja E145: el contador del secreto
 	ld hl,0e144h		;65d1
 	ld a,(hl)			;65d4
 	or a			;65d5
@@ -4619,12 +4648,12 @@ CUENTA_ATRAS_DEL_TIRO:		; Baja E144 y, justo al llegar a uno, si el anillo era e
 	cp 001h		;65d8
 	ret nz			;65da
 	ld a,(0e11ch)		;65db
-	cp 009h		;65de   ; El anillo 9 es el aro de fuera: el peor
+	cp 009h		;65de   ; El anillo 9 es EL CENTRO de la diana, el que paga 600 en la tabla de 0x5D37. El aro de fuera es el 0
 	ret nz			;65e0
 	ld a,(0e111h)		;65e1
 	cp 003h		;65e4   ; Con E111 por debajo de tres, se baja E145
 	jr nc,L_65EC		;65e6
-	ld hl,0e145h		;65e8
+	ld hl,0e145h		;65e8   ; Tres centros y E145 llega a cero: es lo que 0x5C22 mira para sacar la manzana y el pinguino
 	dec (hl)			;65eb
 L_65EC:
 	ld a,096h		;65ec   ; El sonido 0x96
@@ -5112,7 +5141,7 @@ CUENTA_LAS_LUCES_DEL_JURADO:		; Con la barra en el paso 0x1C, cada 0x20 fotogram
 	ld a,092h		;6f8a   ; El sonido 0x92
 	call SUENA_SI_SE_PUEDE		;6f8c
 	pop af			;6f8f
-	cp 003h		;6f90
+	cp 003h		;6f90   ; A la tercera luz del jurado, E1A3 queda puesto: levantamiento valido, que es lo que abre la puerta a las flores
 	ret nz			;6f92
 	ld a,001h		;6f93   ; E071 y E1A3 a uno: levantamiento valido
 	ld (0e071h),a		;6f95
@@ -5367,17 +5396,34 @@ L_7615:
 	ld (hl),a			;7615
 	ld (0e110h),a		;7616   ; La escribe dos veces: HL ya apuntaba a E110
 	ret			;7619
-COPIA_LOS_NUEVE_BYTES:		; Los nueve bytes de 0x7626 a 0xE100
-	ld de,0e100h		;761a
+
+; ----------------------------------------------------------------------
+; ######################################################################
+; LOS DOS BICHOS DEL TIRO AL PLATO. El lanzador de 0x5757 solo sabe
+; poner las posturas 1, 2 y 3 -los platos de 100, 500 y 1000-. Las
+; posturas 4 y 5 no las pone nadie mas que estas dos rutinas, y por eso
+; el pulpo y el pajaro no son platos: son ranuras montadas a mano.
+;
+; 0x4F59 las llama cuando la tanda se acaba con las tres ranuras
+; vacias: la primera vez esta -el pulpo- y la segunda 0x762F -el
+; pajaro-, contadas en E19A. Con E199 puesto no llama a ninguna.
+; ######################################################################
+; ----------------------------------------------------------------------
+SUELTA_EL_PULPO:		; Mete en la ranura de E100 la postura 4: el pulpo, que ni el lanzador de 0x5757 ni ninguna otra rutina saben poner
+	ld de,0e100h		;761a   ; Nueve bytes: postura 4, Y 0x60, X 0xE8 y la velocidad 0xFC00, que lo lleva hacia la izquierda
 	ld hl,07626h		;761d
 	ld bc,00009h		;7620
 	ldir		;7623
 	ret			;7625
 
 ; ----------------------------------------------------------------------
-; DATOS nueve_de_761D: Los nueve bytes que 0x761D copia con un ldir
+; DATOS la_ranura_del_pulpo: La ranura entera del pulpo, tal como la copia
+;   0x761A: postura 4, Y 0x60 (+2), X 0xE8 (+4) y velocidad 0xFC00 (+7), que
+;   lo lleva hacia la izquierda. La postura 4 saca el patron 0x2C y el color
+;   0x0F de la tabla de 0x511D, y paga 0x30 en BCD -3000 puntos- en la de
+;   0x5B0A
 ;   0x7626..0x762f  (9 bytes)
-DATA_nueve_de_761D:
+DATA_la_ranura_del_pulpo:
 	defb 004h,000h,060h,000h,0e8h,000h,000h,000h,0fch	; 7626  ..`......
 
 ; ======================================================================
@@ -5385,8 +5431,8 @@ DATA_nueve_de_761D:
 ; ======================================================================
 
 
-REARRANCA_LAS_TIRAS:		; Con E179 puesto, deja las dos tiras de nueve bytes y el paso en 5
-	ld a,(0e179h)		;762f   ; Sin E179, no se toca nada
+SUELTA_EL_PAJARO:		; Las dos ranuras del pajaro, pero SOLO con E179 puesto: es decir, solo si al pulpo se le dio con el canon de arriba
+	ld a,(0e179h)		;762f   ; E179 lo marca 0x5AC1, y solo cuando se revienta la postura 4 -el pulpo- con E178 distinto de cero
 	and a			;7632
 	ret z			;7633
 	ld de,0e118h		;7634
@@ -5399,14 +5445,17 @@ COPIA_LOS_NUEVE_DEL_REVES:		; Los nueve bytes de 0x764C a 0xE110 y otra vez a 0x
 	dec a			;7643
 	jr nz,COPIA_LOS_NUEVE_DEL_REVES		;7644
 	ld a,005h		;7646
-	ld (0e100h),a		;7648
+	ld (0e100h),a		;7648   ; La ranura de E100 se queda en la postura 5, y la de E110 en la 6: dos mitades del mismo bicho
 	ret			;764b
 
 ; ----------------------------------------------------------------------
-; DATOS nueve_de_7639: Los nueve bytes que 0x7639 copia del reves a 0xE110 y a
-;   0xE100: los mismos que los de 0x7626 salvo el primero y el ultimo
+; DATOS la_ranura_del_pajaro: Las dos ranuras del pajaro, que 0x7639 copia del
+;   reves a 0xE110 y a 0xE100: los mismos bytes que los del pulpo salvo el
+;   primero y el ultimo. La de E100 acaba en la postura 5 (patron 0x30/0x38
+;   alternos, color 0x04) y la de E110 en la 6 (patron 0x34, color 0x0F). El
+;   pajaro paga 0x10 en BCD: 1000 puntos
 ;   0x764c..0x7655  (9 bytes)
-DATA_nueve_de_7639:
+DATA_la_ranura_del_pajaro:
 	defb 006h,000h,060h,000h,0e8h,000h,000h,000h,0ffh	; 764c  ..`......
 
 ; ======================================================================

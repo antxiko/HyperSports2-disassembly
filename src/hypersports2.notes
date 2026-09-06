@@ -373,7 +373,7 @@ C 0x4C1F E089, la marca a batir
 L 0x4C25 ARRANCA_ARCHERY      La segunda: las ocho fichas de sprite de 0x4C3D y los valores de la flecha
 C 0x4C25 Las ocho fichas de sprite de 0x4C3D
 C 0x4C2B 0x20 bytes: ocho fichas
-C 0x4C32 E145 = 3
+C 0x4C32 E145 = 3: los tres centros que hay que clavar para que salga el secreto
 C 0x4C37 E111 = 7
 D 0x4C3D 0x4C5D treinta_y_dos_a_e0c0 Los 0x20 bytes que 0x4C25 copia con un ldir a 0xE0C0: ocho fichas de sprite
 F 0x4C3D 4
@@ -487,7 +487,8 @@ C 0x4F2D La marca del intento y sus tres numeros
 C 0x4F39 Con E172 a cero se rearma la tanda: 0x18 platos
 C 0x4F44 Mientras E1A5 o E1A6 no esten a cero, no se mira el final
 C 0x4F4B Los tres platos de E100, de 0x10 en 0x10: si alguno sigue vivo, no se acaba
-C 0x4F59 E199 marca el desempate
+C 0x4F59 E199 apaga los dos bichos: lo marca 0x591D cada vez que 0x58EF retira un plato -se fue por el borde o le alcanzo el perdigon- sin que E179 este puesto
+C 0x4F5F E19A cuenta las tandas limpias: la primera saca el pulpo y la segunda el pajaro
 C 0x4F63 La primera vez lleva a 0x761A y la segunda a 0x762F
 C 0x4F6D E151: mientras haya algo en marcha, se espera
 C 0x4F7D La dificultad sube hasta siete y ahi se queda
@@ -520,9 +521,16 @@ D 0x5054 0x505A tabla_de_5054 Las 3 palabras del despacho de 0x5051, pegadas det
 F 0x5054 w1
 L 0x505A REMATE_DEL_SKEET     Deja en E151 el patron que toque y devuelve NZ para que la espera siga
 L 0x5062 SIGUE_ESPERANDO      Devuelve con el bit 0 puesto: aun no ha terminado
+B 0x5065 ######################################################################
+B 0x5065 EL SECRETO DE LA HALTEROFILIA. El jurado da el levantamiento por
+B 0x5065 bueno en 0x6F98 -tres luces- y deja E1A3 puesto. A partir de ahi,
+B 0x5065 cada vez que se pulsa el boton 0x523E sube E132. Cuando E132 llega a
+B 0x5065 5, esta rutina pinta doce tiles 0x91 en la fila 16 y doce 0x92 en la
+B 0x5065 17: son LAS FLORES del podio. Y 0x5248 cobra ademas 2000 puntos.
+B 0x5065 ######################################################################
 L 0x5065 REMATE_DEL_WEIGHT    Con la barra arriba del todo (E132=5) pinta las dos filas de tiles y sigue con el levantador
-C 0x5069 El 5 es la postura de haber levantado
-C 0x5071 Fila 16, columna 7: doce tiles
+C 0x5069 EL SECRETO: la postura 5 es la ultima, la de haber levantado del todo
+C 0x5071 Doce tiles del 0x91 en la fila 16 y doce del 0x92 en la 17: las flores sobre el podio
 C 0x5079 Y la fila de al lado, otros doce con el tile siguiente
 C 0x5086 E1A3: si ha calificado, un patron; si no, el otro
 C 0x5094 Bit 4 del contador: el levantador parpadea
@@ -539,10 +547,10 @@ L 0x50DC ACABA_LA_PRUEBA      E081 a uno: el estado 6 lo lee y da el intento por
 L 0x50E2 COLOCA_LOS_TRES_PLATOS  Para cada uno de los tres platos de E100, deja su X, su Y y el patron y color que le toquen
 C 0x50E2 Los tres platos, de 0x10 en 0x10
 C 0x50EB +2 es la Y y +4 la X
-C 0x50FC La postura 5 con el bit 2 del contador a cero cuenta como la 7: asi parpadea al romperse
+C 0x50FC La postura 5 alterna con la 7 cada cuatro fotogramas, y eso cambia el patron entre el 0x30 y el 0x38: el pajaro bate las alas
 C 0x5108 La tabla de parejas patron/color
 C 0x5115 Y al plato siguiente, 0x10 bytes mas alla
-D 0x511D 0x512D dieciseis_de_5108 Los bytes que 0x5108 recorre de dos en dos, indexados con DE_MAS_A
+D 0x511D 0x512D patron_y_color_por_postura Ocho parejas (patron, color) que 0x5108 indexa por la postura de la ranura. De la 1 a la 3 son los platos, todos con el patron 0x00 y cambiando solo el color: 0x0F, 0x04 y 0x06. De la 4 en adelante son los bichos: 0x2C/0x0F el pulpo, 0x30/0x04 y 0x38/0x04 el pajaro aleteando, y 0x34/0x0F su segunda ranura. AQUI es donde un sprite coge su color, porque el patron no lo lleva
 F 0x511D 2
 L 0x512D SACUDE_EL_PRIMER_PLATO  Con el primer plato en la postura 5 o mas, le da un empujon de +0x40 o -0x40 cada 16 fotogramas
 C 0x5130 Por debajo de la postura 5 no hay nada que sacudir
@@ -550,9 +558,9 @@ C 0x5136 Bit 4 del contador: hacia un lado o hacia el otro
 C 0x5138 0x40 arriba o 0xC0 abajo
 C 0x5140 E105 y E115, la altura y su copia
 L 0x5147 FOTOGRAMA_DEL_WEIGHT  Empuja 0x521C y despacha por E1A1: los once pasos de la halterofilia
+C 0x514B Los pasos 6, 7, 8 y 10 son los MISMOS que los del skeet: guardar la marca, mirar el liston, el final y acabar
 D 0x5151 0x5167 tabla_de_5151 Las 11 palabras del despacho de 0x514E, pegadas detras de su call: 0x5167 0x518B 0x51AA 0x51BA 0x51C2 0x522E 0x4FD6 0x5000 0x501A 0x525B 0x50DC. Cierra clavada contra su destino mas bajo hacia delante
 F 0x5151 w1
-C 0x514B Los pasos 6, 7, 8 y 10 son los MISMOS que los del skeet: guardar la marca, mirar el liston, el final y acabar
 L 0x5167 WEIGHT_PASO_0        Espera al sonido, agota E004 y, en cuanto se toca el mando, arranca
 C 0x5167 Mientras suene algo, nada
 C 0x516A Mientras suene algo, no se sigue
@@ -583,8 +591,9 @@ L 0x5223 SUBE_LAS_FICHAS      Los 0x3D bytes de fichas de E0C0 a la tabla de spr
 L 0x522E WEIGHT_PASO_5        Con el mando y el levantamiento dado por bueno, sube la postura; luego espera al sonido y cobra
 C 0x5231 Sin levantamiento valido no se sube nada
 C 0x5237 Bit 3 del mando
+C 0x523E Con el levantamiento ya valido, E132 sube uno por fotograma mientras el boton siga pulsado; el remate mira que llegue a 5
 C 0x523F Mientras el canal de E012 suene, se espera
-C 0x524B La postura 5 es la buena: entonces se cobran 0x20 puntos
+C 0x524B Con E132 en 5 se suman los tres bytes de E134, con el 0x20 recien puesto en el de en medio: 2000 puntos en BCD
 L 0x525B WEIGHT_PASO_9        Copia el flujo de 0x7230 a la VRAM y deja la marca sacada de la tabla de 0x5285
 C 0x5266 Con el levantamiento valido, C baja a 0x0F: el and de abajo deja otra cifra
 C 0x526D E110, el indice de la marca
@@ -594,9 +603,9 @@ C 0x527A El and con C: con el levantamiento valido sale otra cifra
 D 0x5285 0x528D ocho_de_5270 Los ocho bytes que 0x5270 indexa y luego pasa por un and con C
 F 0x5285 8
 L 0x528D FOTOGRAMA_DEL_ARCHERY  B se queda con el submodo (E10A) y se despacha por E1A1: los siete pasos del tiro con arco
+C 0x5291 Como en el archery, los pasos 3, 4, 5 y 6 son los mismos que los del skeet
 D 0x5297 0x52A5 tabla_de_5297 Las 7 palabras del despacho de 0x5294, pegadas detras de su call: 0x52A5 0x52C4 0x52D2 0x4FD6 0x4FEA 0x501A 0x50DC. Cierra clavada contra su destino mas bajo hacia delante
 F 0x5297 w1
-C 0x5291 Como en el archery, los pasos 3, 4, 5 y 6 son los mismos que los del skeet
 L 0x52A5 ARCHERY_PASO_0       Pinta la lista de 0x6643, espera 0x30 y arranca el submodo 1
 C 0x52A5 0x30 fotogramas
 C 0x52A7 E004, los fotogramas de espera
@@ -747,7 +756,7 @@ C 0x574D La primera con el estado a cero
 L 0x5757 SUELTA_EL_PLATO      Rellena la ranura: 0x18 fotogramas hasta el siguiente y la postura de partida
 C 0x5757 Otros 0x18 fotogramas hasta el proximo
 C 0x575B E171 cuenta los platos de la tanda
-C 0x5762 En el plato 0x0E se lanzan de dos en dos...
+C 0x5762 En el plato 0x0E la postura de partida sube a 2 y en el 0x1D a 3: no se lanzan mas platos, valen mas
 C 0x5767 ...y en el 0x1D, de tres en tres
 C 0x5774 Tres rra: el contador entre ocho da el byte de la tabla
 C 0x577A E074, la dificultad, elige de que fila de la tabla se lee
@@ -825,11 +834,11 @@ L 0x5932 BORRA_LA_RANURA      Los ocho bytes de la ranura a cero y su ficha de s
 L 0x5937 BUCLE_DE_BORRADO     Deja la ranura a cero y saca su ficha de la pantalla
 C 0x593A C bytes a cero
 C 0x5945 0xE0 en los cinco bytes: la ficha sale de la pantalla
-L 0x594B LE_HE_DADO          Devuelve con acarreo si el disparo cae dentro del plato: mira la Y y luego la distancia en X
+L 0x594B SE_ACABO_EL_PLATO    Devuelve con acarreo por dos motivos: el plato ha llegado a los ocho puntos del borde (0x5954), o el perdigon ya ha subido por encima de el (0x5965)
 C 0x594B La primera casilla de la ranura dice la postura
 C 0x594E Con la ranura vacia no hay nada que mirar
-C 0x5954 Ocho de margen arriba y ocho abajo
-C 0x595A Solo las posturas 0 a 3 se pueden reventar
+C 0x5954 X+8 por debajo de 0x10 es la franja de ocho puntos de los dos bordes: el plato se ha ido de la pantalla
+C 0x595A De la postura 4 para arriba no se mira lo del perdigon: a los bichos no se les revienta por esa via
 C 0x5967 Y la distancia en X: si sale con acarreo, el disparo cae dentro
 L 0x5969 MUEVE_LOS_PERDIGONES  A los tres perdigones les resta su paso a la Y y les copia el patron del plato al que van
 C 0x596F Los tres perdigones
@@ -853,12 +862,13 @@ C 0x59DC Y se queda con la menor
 C 0x59E3 0x0C bytes: la ranura siguiente
 C 0x59EE Sin plato en esa ranura, la escopeta no apunta ahi
 C 0x59F5 Sin ningun plato, la escopeta se queda apuntando a 0x90
-L 0x59F8 DISPARA              Con el mando, dispara el canon que toque: el bit 3 el de arriba y los bits 2 y 4 el de abajo
+L 0x59F8 DISPARA              Con el mando, dispara el canon que toque: el bit 3 el de ABAJO (E0C0) y los bits 2 y 4 el de ARRIBA (E0C4)
 C 0x59FB Bit 3 del mando: el canon de arriba
 C 0x5A03 Bits 2 y 4: el de abajo
 L 0x5A06 DISPARA_ARRIBA       El canon de arriba, el de 0xE0C4
 L 0x5A0C DISPARA_ABAJO        El de abajo, el de 0xE0C0
 L 0x5A10 UN_DISPARO           Apunta la escopeta, gasta un cartucho y mira si le da a alguno de los tres platos
+C 0x5A10 E178 se queda con el canon que ha disparado: cero el de abajo y distinto de cero el de arriba. Es lo unico que hace falta acertar para que salga el pajaro
 C 0x5A14 E1AA a cero: todavia no ha dado
 C 0x5A1F Sin cartuchos (E172 a cero) solo suena el clic
 C 0x5A25 Y con E1AB puesto tampoco se gasta: es el disparo de la demo
@@ -886,7 +896,7 @@ F 0x5AA6 7
 L 0x5AAD COBRA_EL_PLATO       Suma al marcador lo que valga la postura en la que se rompio, y sube la dificultad
 C 0x5AAD La ranura que se aparco en E200
 C 0x5AB0 Su postura, a E202
-C 0x5AB4 La postura 4 con E178 puesto marca E179
+C 0x5AB4 EL SECRETO: la postura 4 es el pulpo, y si E178 dice que se le dio con el canon de arriba, E179 queda marcado y 0x762F sacara el pajaro
 C 0x5AC6 Otra tabla que arranca en un ret: lo que paga cada postura, en BCD
 C 0x5AC9 Indexada por la postura
 C 0x5AD1 El daa: los puntos van en BCD
@@ -939,6 +949,7 @@ C 0x5C08 Y el tope por la derecha es 0xAF
 L 0x5C0B ANDA_A_LA_IZQUIERDA  El otro sentido
 L 0x5C11 REMATA_EL_PASO       Coloca las seis fichas, elige el motor que toca y deja ocho fotogramas de espera
 C 0x5C17 E111 a cero: es la primera vez
+C 0x5C22 EL SECRETO: con E145 a cero -tres flechas en el centro- el remate no es el de siempre, sino el de las seis fichas de 0x5E59
 C 0x5C25 E145 elige entre los dos remates
 C 0x5C3B La lista de 0x6635
 C 0x5C4F Once bytes de E112 a cero
@@ -1033,15 +1044,16 @@ C 0x5E15 Ocho mas: el otro extremo
 C 0x5E18 E204, el viento centrado
 C 0x5E1C Fuera de los ocho puntos, no vale
 C 0x5E20 E11D y E11E a cero
-C 0x5E25 El patron 0x7C y el color 0x30
+C 0x5E25 El patron 0x7C es el rotulo 3000, y el 0x30 que va a E11E son los 3000 puntos en BCD: no es un color
 C 0x5E30 El sonido 0x96
 L 0x5E35 ALTERNA_DOS_PATRONES  Los patrones de 0xE0CA y 0xE0D2 cambian cada ocho fotogramas entre 0x68/0x70 y 0x74/0x78
+C 0x5E35 Los dos patrones que se alternan son las dos capas del pinguino que se mueven: el cuerpo (0x68/0x74) y las patas (0x70/0x78)
 C 0x5E3C Bit 3: ocho y ocho
 C 0x5E44 Los patrones van a las fichas de E0CA y E0D2
 L 0x5E4D COLOCA_LAS_SEIS_FICHAS  Las seis fichas de sprite de 0x5E59, tal cual
 C 0x5E4D El molde de las seis fichas
 C 0x5E53 0x18 bytes: seis fichas
-D 0x5E59 0x5E71 veinticuatro_a_e0c4 Los 0x18 bytes que 0x5E4D copia con un ldir a 0xE0C4: seis fichas de sprite
+D 0x5E59 0x5E71 las_fichas_del_secreto Las seis fichas de sprite del secreto del arco, con SU COLOR cada una, que 0x5E4D copia con un ldir a 0xE0C4. La primera es la manzana: patron 0x64 y color 0x06. Las tres siguientes son el MISMO pinguino, tres sprites superpuestos en la misma casilla con tres colores: el patron 0x68 en color 0x04, el 0x6C en 0x0F y el 0x70 en 0x0A. Asi se pinta una figura de tres colores en un MSX1, donde cada sprite es de un color solo
 F 0x5E59 4
 L 0x5E71 ARRANCA_LA_CEREMONIA  Las dos poses de la figura (0x5E8B y 0x5EA3) y la segunda copiada ya a la zona de trabajo
 C 0x5E87 E236 = 0x7F
@@ -1102,9 +1114,17 @@ D 0x6021 0x6244 rle_6021 Flujo comprimido con su direccion de VRAM delante: 682 
 D 0x6244 0x6318 rle_6244 Flujo comprimido con su direccion de VRAM delante: 656 bytes de VRAM
 D 0x6318 0x64C5 flujo_6318 Flujo comprimido con su direccion de VRAM delante: 1027 bytes de VRAM
 D 0x64C5 0x65D1 flujo_64C5 Flujo comprimido con su direccion de VRAM delante: 509 bytes de VRAM
-L 0x65D1 CUENTA_ATRAS_DEL_TIRO  Baja E144 y, justo al llegar a uno, si el anillo era el 9, baja la dificultad y suena
-C 0x65DE El anillo 9 es el aro de fuera: el peor
+B 0x65D1 ######################################################################
+B 0x65D1 EL SECRETO DEL TIRO CON ARCO. E145 arranca en 3 (0x4C32) y baja uno
+B 0x65D1 cada vez que una flecha se clava en el anillo 9, que es EL CENTRO de
+B 0x65D1 la diana -el que paga 600 en la tabla de 0x5D37-. Al tercer centro
+B 0x65D1 E145 llega a cero, y entonces 0x5C22 no monta el remate de siempre:
+B 0x65D1 copia las seis fichas de 0x5E59, que son la manzana y el pinguino.
+B 0x65D1 ######################################################################
+L 0x65D1 CUENTA_ATRAS_DEL_TIRO  Baja E144 y, justo al llegar a uno, si la flecha se clavo en el centro, baja E145: el contador del secreto
+C 0x65DE El anillo 9 es EL CENTRO de la diana, el que paga 600 en la tabla de 0x5D37. El aro de fuera es el 0
 C 0x65E4 Con E111 por debajo de tres, se baja E145
+C 0x65E8 Tres centros y E145 llega a cero: es lo que 0x5C22 mira para sacar la manzana y el pinguino
 C 0x65EC El sonido 0x96
 C 0x65F1 Y la lista de 0x65F7
 D 0x65F7 0x6612 lista_65F7 Lista de 18 tiles con su direccion de VRAM delante, para PINTA_LISTA (0x4050)
@@ -1181,6 +1201,7 @@ L 0x6F78 CUENTA_LAS_LUCES_DEL_JURADO  Con la barra en el paso 0x1C, cada 0x20 fo
 C 0x6F7B Solo en el paso 0x1C
 C 0x6F82 0x20 fotogramas entre luz y luz
 C 0x6F8A El sonido 0x92
+C 0x6F90 A la tercera luz del jurado, E1A3 queda puesto: levantamiento valido, que es lo que abre la puerta a las flores
 C 0x6F93 E071 y E1A3 a uno: levantamiento valido
 L 0x6F9C SIN_LUCES            Fuera del paso 0x1C, la cuenta vuelve a 0x20 y las luces se apagan
 L 0x6FA2 CAE_LA_BARRA         Tres fases en E138: arranca el sonido, deja caer los dos discos y espera a que el canal calle. Devuelve Z cuando ha terminado
@@ -1223,16 +1244,28 @@ C 0x75FF Los cuatro bits bajos: cualquier direccion
 C 0x7602 El sonido 0x09
 C 0x7610 Ocho categorias en redondo
 C 0x7616 La escribe dos veces: HL ya apuntaba a E110
-L 0x761A COPIA_LOS_NUEVE_BYTES  Los nueve bytes de 0x7626 a 0xE100
-D 0x7626 0x762F nueve_de_761D Los nueve bytes que 0x761D copia con un ldir
+B 0x761A ######################################################################
+B 0x761A LOS DOS BICHOS DEL TIRO AL PLATO. El lanzador de 0x5757 solo sabe
+B 0x761A poner las posturas 1, 2 y 3 -los platos de 100, 500 y 1000-. Las
+B 0x761A posturas 4 y 5 no las pone nadie mas que estas dos rutinas, y por eso
+B 0x761A el pulpo y el pajaro no son platos: son ranuras montadas a mano.
+B 0x761A
+B 0x761A 0x4F59 las llama cuando la tanda se acaba con las tres ranuras
+B 0x761A vacias: la primera vez esta -el pulpo- y la segunda 0x762F -el
+B 0x761A pajaro-, contadas en E19A. Con E199 puesto no llama a ninguna.
+B 0x761A ######################################################################
+L 0x761A SUELTA_EL_PULPO      Mete en la ranura de E100 la postura 4: el pulpo, que ni el lanzador de 0x5757 ni ninguna otra rutina saben poner
+C 0x761A Nueve bytes: postura 4, Y 0x60, X 0xE8 y la velocidad 0xFC00, que lo lleva hacia la izquierda
+D 0x7626 0x762F la_ranura_del_pulpo La ranura entera del pulpo, tal como la copia 0x761A: postura 4, Y 0x60 (+2), X 0xE8 (+4) y velocidad 0xFC00 (+7), que lo lleva hacia la izquierda. La postura 4 saca el patron 0x2C y el color 0x0F de la tabla de 0x511D, y paga 0x30 en BCD -3000 puntos- en la de 0x5B0A
 F 0x7626 9
-L 0x762F REARRANCA_LAS_TIRAS  Con E179 puesto, deja las dos tiras de nueve bytes y el paso en 5
-C 0x762F Sin E179, no se toca nada
+L 0x762F SUELTA_EL_PAJARO     Las dos ranuras del pajaro, pero SOLO con E179 puesto: es decir, solo si al pulpo se le dio con el canon de arriba
+C 0x762F E179 lo marca 0x5AC1, y solo cuando se revienta la postura 4 -el pulpo- con E178 distinto de cero
 C 0x7637 Dos vueltas
 L 0x7639 COPIA_LOS_NUEVE_DEL_REVES  Los nueve bytes de 0x764C a 0xE110 y otra vez a 0xE100, copiados hacia atras con un lddr
 C 0x763F Del reves: el lddr acaba en el primer byte
 C 0x7641 Y la segunda vuelta, a 0xE100
-D 0x764C 0x7655 nueve_de_7639 Los nueve bytes que 0x7639 copia del reves a 0xE110 y a 0xE100: los mismos que los de 0x7626 salvo el primero y el ultimo
+C 0x7648 La ranura de E100 se queda en la postura 5, y la de E110 en la 6: dos mitades del mismo bicho
+D 0x764C 0x7655 la_ranura_del_pajaro Las dos ranuras del pajaro, que 0x7639 copia del reves a 0xE110 y a 0xE100: los mismos bytes que los del pulpo salvo el primero y el ultimo. La de E100 acaba en la postura 5 (patron 0x30/0x38 alternos, color 0x04) y la de E110 en la 6 (patron 0x34, color 0x0F). El pajaro paga 0x10 en BCD: 1000 puntos
 F 0x764C 9
 C 0x7656 La altura de antes, mas uno
 C 0x765B Si coinciden, la orden de repetir se salta
@@ -1313,13 +1346,6 @@ C 0x77E1 Topado en 0x0F
 C 0x77E9 Y ese es el numero de la nota
 C 0x77EC Sin volumen propio: se coge el de fondo
 C 0x77F0 El nibble alto es el volumen, y el 0x0C deja el de fondo
-L 0x77FE PERIODO_DE_LA_NOTA   Del indice sale el periodo de 0x7832, se baja tantas octavas como diga la octava y se escribe en el PSG
-C 0x7805 La tabla de las doce notas
-C 0x780E La octava del canal
-L 0x7815 BAJA_UNA_OCTAVA      Doblar el periodo es bajar una octava
-C 0x7818 Y el desafine suma uno al periodo
-L 0x781F ESCRIBE_EL_PERIODO   Los dos registros del canal: primero el alto y luego el bajo
-L 0x782A APUNTA_EL_FLUJO      Guarda en el canal por donde va leyendo
 B 0x77FE ----------------------------------------------------------------------
 B 0x77FE LAS DOCE NOTAS. La tabla de 0x7832 son los periodos del PSG de UNA
 B 0x77FE octava entera: 0x6A, 0x64, 0x5F, 0x59, 0x54, 0x50, 0x4B, 0x47, 0x43,
@@ -1329,6 +1355,13 @@ B 0x77FE si de la misma octava; y las once razones de en medio caen en el
 B 0x77FE semitono. Las demas octavas no se guardan: se sacan doblando el
 B 0x77FE periodo en 0x7815, que es exactamente bajar una octava.
 B 0x77FE ----------------------------------------------------------------------
+L 0x77FE PERIODO_DE_LA_NOTA   Del indice sale el periodo de 0x7832, se baja tantas octavas como diga la octava y se escribe en el PSG
+C 0x7805 La tabla de las doce notas
+C 0x780E La octava del canal
+L 0x7815 BAJA_UNA_OCTAVA      Doblar el periodo es bajar una octava
+C 0x7818 Y el desafine suma uno al periodo
+L 0x781F ESCRIBE_EL_PERIODO   Los dos registros del canal: primero el alto y luego el bajo
+L 0x782A APUNTA_EL_FLUJO      Guarda en el canal por donde va leyendo
 D 0x7832 0x783E las_doce_notas Los periodos del PSG de las doce notas de una octava, de do a si; las otras octavas salen doblando en 0x7815
 F 0x7832 12
 F 0x7832 12
