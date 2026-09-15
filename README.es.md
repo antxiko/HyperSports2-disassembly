@@ -28,7 +28,7 @@ bytes, sha256
 | bytes explicados | 16.384 de 16.384 (100 %) |
 | código trazado | 6.956 bytes, 3.680 instrucciones |
 | datos identificados | 9.428 bytes en 151 rangos con nombre |
-| comentado | 828 comentarios de línea, 22,5 % |
+| comentado | 837 comentarios de línea, 22,7 % |
 | rutinas flojas (por debajo del 10 %) | 0 de 500 |
 
 Las anotaciones viven aparte del listado, ancladas a la dirección que

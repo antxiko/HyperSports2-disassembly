@@ -44,7 +44,7 @@ comentarios sobreviven a un retrazado:
 
 `make sanity` imprime el presupuesto: 6.956 bytes de código trazado y 9.428 de
 datos en rangos con nombre, 0 sin explicar, 16.384 en total. `make densidad`
-imprime la densidad de comentario: 3.680 instrucciones, 828 comentarios de
-línea, 22,5 %, y ni una rutina por debajo del 10 %.
+imprime la densidad de comentario: 3.680 instrucciones, 837 comentarios de
+línea, 22,7 %, y ni una rutina por debajo del 10 %.
 
 Todas las cifras de esta web salen de esas dos órdenes, no de una estimación.

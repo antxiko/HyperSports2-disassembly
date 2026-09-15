@@ -42,7 +42,7 @@ a file of notes anchored to addresses, so the comments survive a re-trace:
 
 `make sanity` prints the budget: 6,956 bytes of traced code and 9,428 bytes of
 data in named ranges, 0 unexplained, 16,384 in total. `make densidad` prints the
-comment density: 3,680 instructions, 828 line comments, 22.5%, and not one
+comment density: 3,680 instructions, 837 line comments, 22.7%, and not one
 routine below 10%.
 
 Every figure on this site comes from those two commands, not from an estimate.

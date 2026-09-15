@@ -27,7 +27,7 @@ The ROM is **not distributed here**. It goes in the root as `hypersports2.rom`,
 | bytes explained | 16,384 of 16,384 (100 %) |
 | traced code | 6,956 bytes, 3,680 instructions |
 | identified data | 9,428 bytes in 151 named ranges |
-| commented | 828 line comments, 22.5 % |
+| commented | 837 line comments, 22.7 % |
 | thin routines (under 10 %) | 0 of 500 |
 
 The annotations live apart from the listing, anchored to the address they
