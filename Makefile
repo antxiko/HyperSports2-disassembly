@@ -103,4 +103,11 @@ web: $(ROM)
 clean:
 	rm -rf $(WORK)/hypersports2.trace.json $(WORK)/hypersports2.blocks
 
-.PHONY: all comprueba trace listado verify sanity test densidad textos imagenes web clean
+
+PYMUS ?= python3     # el que tenga numpy y lameenc
+# La musica: el motor del cartucho ejecutado (tools/musica.py) a MP3
+musica: $(ROM)
+	$(PYMUS) tools/musica.py todas docs/audio
+	$(PYMUS) tools/pagina_musica.py
+
+.PHONY: musica all comprueba trace listado verify sanity test densidad textos imagenes web clean
