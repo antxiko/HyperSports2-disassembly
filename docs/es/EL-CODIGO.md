@@ -83,3 +83,30 @@ corren dos guardianes:
   datos.
 
 Y `presupuesto.py` se niega a pasar si sobra un solo byte de los 16.384.
+
+## Código compartido con otros cartuchos de Konami
+
+Este desensamblado se ha comparado, instrucción por instrucción, con
+todos los demás de Konami de la serie. Cuenta un bloque cuando las
+mismas instrucciones, al menos seis desde una etiqueta hasta su `ret`
+o su salto sin condición, están en los dos cartuchos; las direcciones
+no se miran, porque cambian de un cartucho a otro. De los otros 57,
+**53** tienen al menos un bloque en común con este; estos son los
+que más comparten:
+
+| Cartucho | Bloques | Instrucciones | Por ejemplo (aquí = allí) |
+|---|---:|---:|---|
+| [Konami's Boxing](https://antxiko.github.io/Boxing-disassembly/es/) | 16 | 162 | `BORRA_LA_PANTALLA` (0x43A8) = `borra_la_pantalla` |
+| [Sky Jaguar](https://antxiko.github.io/SkyJaguar-disassembly/es/) | 16 | 224 | `SOLO_SI_PESA_MAS` (0x7884) = `REPARTE_CANALES` |
+| [Yie Ar Kung-Fu](https://antxiko.github.io/YieArKungFu-disassembly/es/) | 16 | 217 | `PINTA_CIFRAS_SIN_CEROS` (0x4320) = `empieza_tapando` |
+| [King's Valley](https://antxiko.github.io/KingsValley-disassembly/es/) | 14 | 155 | `PERIODO_DE_LA_NOTA` (0x77FE) = `arranca_con_forma_elegida` |
+| [Konami's Ping Pong](https://antxiko.github.io/KonamisPingPong-disassembly/es/) | 14 | 140 | `LEE_EL_TECLADO` (0x44C1) = `lee_teclado_1` |
+| [The Goonies](https://antxiko.github.io/Goonies-disassembly/es/) | 12 | 126 | `ABRE_O_CIERRA_EL_CANAL` (0x7670) = `enciende_o_apaga_el_ruido` |
+| [Road Fighter](https://antxiko.github.io/RoadFighter-disassembly/es/) | 12 | 108 | `ABRE_O_CIERRA_EL_CANAL` (0x7670) = `enciende_o_apaga_canales` |
+| [Yie Ar Kung-Fu II](https://antxiko.github.io/YieArKungFu2-disassembly/es/) | 12 | 128 | `LEE_EL_TECLADO` (0x44C1) = `lee_las_filas_7_y_8_del_teclado` |
+| [Hyper Sports 3](https://antxiko.github.io/HyperSports3-disassembly/es/) | 11 | 137 | `LEE_EL_TECLADO` (0x44C1) = `teclado_del_jugador_1` |
+| [Knightmare](https://antxiko.github.io/Knightmare-disassembly/es/) | 11 | 105 | `ABRE_O_CIERRA_EL_CANAL` (0x7670) = `enciende_o_apaga_el_ruido` |
+
+La matriz entera, los 58 cartuchos entre sí, está en
+[Las rutinas](https://antxiko.github.io/MSX-disassembly-database/es/LAS-RUTINAS.html) de la base de datos de la
+serie, con el método y el programa que la mide.

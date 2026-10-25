@@ -82,3 +82,30 @@ build:
 
 And `presupuesto.py` refuses to pass if a single byte of the 16,384 is left
 unassigned.
+
+## Code shared with other Konami cartridges
+
+This disassembly has been compared, instruction by instruction, with
+every other Konami one in the series. A block counts when the same
+instructions, at least six of them from a label to its `ret` or its
+unconditional jump, are in both cartridges; the addresses are left
+aside, because they change from one cartridge to the next. Of the
+other 57, **53** have at least one block in common with this one;
+these are the ones that share the most:
+
+| Cartridge | Blocks | Instructions | For example (here = there) |
+|---|---:|---:|---|
+| [Konami's Boxing](https://antxiko.github.io/Boxing-disassembly/) | 16 | 162 | `BORRA_LA_PANTALLA` (0x43A8) = `borra_la_pantalla` |
+| [Sky Jaguar](https://antxiko.github.io/SkyJaguar-disassembly/) | 16 | 224 | `SOLO_SI_PESA_MAS` (0x7884) = `REPARTE_CANALES` |
+| [Yie Ar Kung-Fu](https://antxiko.github.io/YieArKungFu-disassembly/) | 16 | 217 | `PINTA_CIFRAS_SIN_CEROS` (0x4320) = `empieza_tapando` |
+| [King's Valley](https://antxiko.github.io/KingsValley-disassembly/) | 14 | 155 | `PERIODO_DE_LA_NOTA` (0x77FE) = `arranca_con_forma_elegida` |
+| [Konami's Ping Pong](https://antxiko.github.io/KonamisPingPong-disassembly/) | 14 | 140 | `LEE_EL_TECLADO` (0x44C1) = `lee_teclado_1` |
+| [The Goonies](https://antxiko.github.io/Goonies-disassembly/) | 12 | 126 | `ABRE_O_CIERRA_EL_CANAL` (0x7670) = `enciende_o_apaga_el_ruido` |
+| [Road Fighter](https://antxiko.github.io/RoadFighter-disassembly/) | 12 | 108 | `ABRE_O_CIERRA_EL_CANAL` (0x7670) = `enciende_o_apaga_canales` |
+| [Yie Ar Kung-Fu II](https://antxiko.github.io/YieArKungFu2-disassembly/) | 12 | 128 | `LEE_EL_TECLADO` (0x44C1) = `lee_las_filas_7_y_8_del_teclado` |
+| [Hyper Sports 3](https://antxiko.github.io/HyperSports3-disassembly/) | 11 | 137 | `LEE_EL_TECLADO` (0x44C1) = `teclado_del_jugador_1` |
+| [Knightmare](https://antxiko.github.io/Knightmare-disassembly/) | 11 | 105 | `ABRE_O_CIERRA_EL_CANAL` (0x7670) = `enciende_o_apaga_el_ruido` |
+
+The whole matrix, the 58 cartridges against each other, is on
+[The routines](https://antxiko.github.io/MSX-disassembly-database/THE-ROUTINES.html) in the series database, along
+with the method and the program that measures it.
